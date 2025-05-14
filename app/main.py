@@ -1,6 +1,10 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+
+from dotenv import load_dotenv
+load_dotenv()  # 加在所有 import 之前
+
 import os
 print("DEBUG → DATABASE_URL: ", os.getenv("DATABASE_URL"))
 
@@ -20,7 +24,7 @@ app.add_middleware(
 # 部屬至railway
 # DATABASE_URL = 
 # postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@postgres.railway.internal:5432/railway
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@postgres.railway.internal:5432/railway")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 try:
