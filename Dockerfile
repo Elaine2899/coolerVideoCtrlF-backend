@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 4. 複製後端程式碼
-COPY . .
+COPY ./app /app/app
 
 # 5. 暴露 8000 端口
 EXPOSE 8000
