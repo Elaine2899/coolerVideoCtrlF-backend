@@ -6,7 +6,7 @@ import os
 app = FastAPI()
 
 # DATABASE_URL = postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@postgres.railway.internal:5432/railway
-DATABASE_URL = os.getenv("postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@postgres.railway.internal:5432/railway")
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
