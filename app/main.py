@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import os
+print("DEBUG → DATABASE_URL: ", os.getenv("DATABASE_URL"))
+
 
 app = FastAPI()
 
