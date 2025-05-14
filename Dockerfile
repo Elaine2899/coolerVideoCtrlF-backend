@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 800
 
 # 6. 使用多工，提高 FastAPI 伺服器效能
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
