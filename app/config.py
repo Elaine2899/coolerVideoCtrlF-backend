@@ -21,7 +21,7 @@ class Settings:
     DATABASE_URL = (
         os.getenv("DATABASE_URL") or 
         os.getenv("DATABASE_PUBLIC_URL") or 
-        "postgresql://postgres:postgres@railway.railway.internal:5432/railway"
+        "postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@switchyard.proxy.rlwy.net:43353/railway"
     )
     DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "5"))
     DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "10"))
