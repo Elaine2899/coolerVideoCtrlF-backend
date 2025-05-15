@@ -38,5 +38,7 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # 6. 啟動 FastAPI 應用
 # host 0.0.0.0 允許外部訪問
 # Railway 會自動處理負載均衡和運行環境
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+# 使用 shell form 來確保環境變數能被正確展開
+# ${PORT:-8000} 表示如果 PORT 未設置，則使用默認值 8000
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 
