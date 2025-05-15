@@ -36,17 +36,17 @@ class Settings:
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
     # ChromaDB 設定
-    # 使用專門的 chroma 服務地址
-    CHROMA_HOST = os.getenv(
-        "CHROMA_HOST",
-        os.getenv("RAILWAY_PRIVATE_DOMAIN", "localhost")
-    ).replace("coolervideoctrlf-backend", "chroma")  # 指向 chroma 服務
+    # 使用 Railway 內部網絡地址
+    CHROMA_HOST = os.getenv("CHROMA_HOST", "chroma.railway.internal")
+    CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
     
-    # ChromaDB URL（使用內部服務發現）
-    CHROMA_URL = os.getenv(
-        "CHROMADB_URL",
-        f"http://{os.getenv('RAILWAY_PRIVATE_DOMAIN', CHROMA_HOST)}"
-    ).replace("coolervideoctrlf-backend", "chroma")
+    # 內部網絡 URL
+    CHROMA_INTERNAL_URL = f"http://{CHROMA_HOST}:{CHROMA_PORT}"
+    # 外部網絡 URL (用於日誌和調試)
+    CHROMA_PUBLIC_URL = "https://chroma-production-84ca.up.railway.app"
+    
+    # 實際使用內部 URL
+    CHROMA_URL = CHROMA_INTERNAL_URL
     
     # 使用對應的服務名稱
     CHROMA_SERVICE_NAME = "chroma"
@@ -101,6 +101,8 @@ class Settings:
         logger.info(f"Attempting to connect to ChromaDB at: {self.CHROMA_URL}")
         logger.info(f"ChromaDB Host: {self.CHROMA_HOST}")
         logger.info(f"ChromaDB Service Name: {self.CHROMA_SERVICE_NAME}")
+        logger.info(f"ChromaDB Internal URL: {self.CHROMA_INTERNAL_URL}")
+        logger.info(f"ChromaDB Public URL: {self.CHROMA_PUBLIC_URL}")
         # 警告如果 CORS 設定為允許所有來源
         if "*" in self.CORS_ORIGINS:
             logger.warning("Warning: CORS is set to allow all origins (*)")
