@@ -39,8 +39,11 @@ class Settings:
     # 優先使用 CHROMA_HOST，若無則使用 CHROMADB_URL
     CHROMA_HOST = os.getenv("CHROMA_HOST", os.getenv("CHROMADB_URL", "localhost"))
     CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
-    # 完整的 ChromaDB URL
-    CHROMA_URL = os.getenv("CHROMADB_URL", f"http://{CHROMA_HOST}:{CHROMA_PORT}")
+    CHROMA_SSL = os.getenv("CHROMA_SSL", "false").lower() == "true"
+    CHROMA_URL = os.getenv(
+        "CHROMADB_URL", 
+        f"{'https' if CHROMA_SSL else 'http'}://{CHROMA_HOST}:{CHROMA_PORT}"
+    )
     # ChromaDB API 金鑰設定
     CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY", os.getenv("CHROMA_API_KEY"))
     CHROMA_AUTH_ENABLED = os.getenv("CHROMA_AUTH_ENABLED", "false").lower() == "true"
