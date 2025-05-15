@@ -6,7 +6,7 @@ try:
     print("成功")
 except Exception as e:
         print(" 連線失敗：", e)
-        
+
 cursor = conn.cursor()
 # 建立 videos 資料表
 cursor.execute("""
@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS videos (
     duration_str VARCHAR(20),
     embed_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+               
 );
 """)
 
