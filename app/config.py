@@ -36,10 +36,14 @@ class Settings:
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
     # ChromaDB 設定
-    CHROMA_PUBLIC_URL = "https://chroma-production-84ca.up.railway.app"
-    CHROMA_HOST = "chroma-production-84ca.up.railway.app"  # 使用公開域名
-    CHROMA_PORT = None  # 使用 HTTPS 默認端口
-    CHROMA_URL = CHROMA_PUBLIC_URL
+    CHROMA_HOST = os.getenv("CHROMA_HOST", "chroma-production-84ca.up.railway.app")
+    CHROMA_PORT = int(os.getenv("CHROMA_PORT", "443"))
+    CHROMA_SSL = os.getenv("CHROMA_SSL", "true").lower() == "true"
+    
+    # URL 設定
+    CHROMA_URL = f"https://{CHROMA_HOST}"
+    CHROMA_PUBLIC_URL = CHROMA_URL
+    CHROMA_INTERNAL_URL = f"http://chroma.railway.internal:8000"
     
     # 其他 ChromaDB 設定
     CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY")
