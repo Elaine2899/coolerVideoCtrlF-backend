@@ -1,41 +1,30 @@
-# Python virtual environments
+# Virtual Environment
+.venv/
 venv/
-env/
-videoVenv/
 ENV/
-
-# Python byte-compiled / optimized
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
+videoVenv/
 
 # Environment variables
 .env
 .env.local
-.env.*
+.env.production
 
-# IDE specific files
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
 # Logs
 *.log
-
-# Local development settings
-local_settings.py
 
 # Database
 *.db
 *.sqlite3
 
-# Testing
+# Test coverage
 .coverage
 htmlcov/
-.pytest_cache/

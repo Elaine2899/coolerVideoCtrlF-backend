@@ -1,5 +1,6 @@
 import chromadb
 from fastapi import FastAPI
+from .config import settings
 
 class ChromaDBClient:
     _instance = None
@@ -12,13 +13,9 @@ class ChromaDBClient:
         return cls._instance
     
     def __init__(self):
-        # 實際部署時從環境變數獲取這些值
-        chroma_host = "chromadb.railway.internal"  # 或從環境變數取得
-        chroma_port = 8000
-        
         self._client = chromadb.HttpClient(
-            host=chroma_host,
-            port=chroma_port
+            host=settings.CHROMA_HOST,
+            port=settings.CHROMA_PORT
         )
         
     def get_client(self):

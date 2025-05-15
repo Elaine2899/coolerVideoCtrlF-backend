@@ -5,22 +5,21 @@ import os
 from dotenv import load_dotenv
 import logging
 from sqlalchemy.exc import SQLAlchemyError
+from .config import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ✅ 可選，確保 local 測試時也會讀 .env
-load_dotenv()
-
 # ✅ 優先吃 Railway 環境變數
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL")
+logger.info(f"Using Database URL: {settings.DATABASE_URL}")
 
-if not DATABASE_URL:
+if not settings.DATABASE_URL:
+    logger.error("❌ No database URL configured!")
     raise ValueError("❌ DATABASE_URL or DATABASE_PUBLIC_URL is missing")
 
 # ✅ 建立 engine
 engine = create_engine(
-    DATABASE_URL,
+    settings.DATABASE_URL,
     pool_size=5,               # 連線池大小
     max_overflow=10,           # 允許的溢出連接數
     pool_timeout=30,           # 獲取連接的超時時間
