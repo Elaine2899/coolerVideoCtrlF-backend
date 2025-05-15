@@ -3,10 +3,11 @@ from sqlalchemy.orm import Session
 import datetime
 import logging
 
-from .config import settings
-from .db import get_db, init_db
-from .api import video_router, chroma_router
-from .chroma_client import ChromaDBClient
+# 修改導入方式
+from app.config import settings
+from app.db import get_db, init_db
+from app.api import video_router, chroma_router
+from app.chroma_client import ChromaDBClient
 
 # 設定日誌
 logger = logging.getLogger(__name__)

@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 設置環境變數
 ENV PORT=8000 \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
 # 4. 複製後端程式碼
 # 將所有源代碼複製到容器中
@@ -38,7 +39,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # 6. 啟動 FastAPI 應用
 # host 0.0.0.0 允許外部訪問
 # Railway 會自動處理負載均衡和運行環境
-# 使用 shell form 來確保環境變數能被正確展開
-# ${PORT:-8000} 表示如果 PORT 未設置，則使用默認值 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 
+CMD ["sh", "-c", "cd /app && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
