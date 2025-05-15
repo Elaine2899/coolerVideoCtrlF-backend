@@ -29,8 +29,9 @@ class Settings:
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800"))
     
     # ChromaDB 設定
-    CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
+    CHROMA_HOST = os.getenv("CHROMA_HOST", "chromadb.railway.internal")
     CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
+    CHROMA_URL = f"http://{CHROMA_HOST}:{CHROMA_PORT}"
     CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "video_embeddings")
     
     # CORS 設定
@@ -60,6 +61,7 @@ class Settings:
         logger.info(f"Debug Mode: {self.DEBUG}")
         logger.info(f"Database URL: {self.DATABASE_URL}")
         logger.info(f"ChromaDB: {self.CHROMA_HOST}:{self.CHROMA_PORT}")
+        logger.info(f"ChromaDB URL: {self.CHROMA_URL}")
         if "*" in self.CORS_ORIGINS:
             logger.warning("Warning: CORS is set to allow all origins (*)")
 

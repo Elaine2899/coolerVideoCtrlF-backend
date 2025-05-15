@@ -17,6 +17,7 @@ class ChromaDBClient:
             host=settings.CHROMA_HOST,
             port=settings.CHROMA_PORT
         )
+        logger.info(f"ChromaDB client initialized with URL: {settings.CHROMA_URL}")
         
     def get_client(self):
         return self._client
