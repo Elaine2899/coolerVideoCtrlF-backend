@@ -29,14 +29,13 @@ class ChromaDBClient:
     def _init_client(self):
         """Initialize ChromaDB client with improved retry mechanism"""
         try:
-            kwargs = {
-                "host": settings.CHROMA_HOST,
-                "port": settings.CHROMA_PORT,
-                "ssl": False  # 內部網絡不需要 SSL
-            }
-            
-            logger.info(f"Connecting to ChromaDB via internal network: {settings.CHROMA_INTERNAL_URL}")
-            client = chromadb.HttpClient(**kwargs)
+            # 使用公開 URL 連接
+            logger.info(f"Connecting to ChromaDB via public URL: {settings.CHROMA_PUBLIC_URL}")
+            client = chromadb.HttpClient(
+                host=settings.CHROMA_HOST,
+                ssl=True,  # 使用 HTTPS
+                port=443   # HTTPS 標準端口
+            )
             
             # 測試連接
             client.heartbeat()

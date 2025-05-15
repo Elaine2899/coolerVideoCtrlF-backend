@@ -36,19 +36,15 @@ class Settings:
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
     # ChromaDB 設定
-    # 使用 Railway 內部網絡地址
-    CHROMA_HOST = os.getenv("CHROMA_HOST", "chroma.railway.internal")
-    CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
-    
-    # 內部網絡 URL
-    CHROMA_INTERNAL_URL = f"http://{CHROMA_HOST}:{CHROMA_PORT}"
-    # 外部網絡 URL (用於日誌和調試)
     CHROMA_PUBLIC_URL = "https://chroma-production-84ca.up.railway.app"
+    CHROMA_HOST = "chroma-production-84ca.up.railway.app"  # 使用公開域名
+    CHROMA_PORT = None  # 使用 HTTPS 默認端口
+    CHROMA_URL = CHROMA_PUBLIC_URL
     
-    # 實際使用內部 URL
-    CHROMA_URL = CHROMA_INTERNAL_URL
-    
-    # 使用對應的服務名稱
+    # 其他 ChromaDB 設定
+    CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY")
+    CHROMA_RETRIES = int(os.getenv("CHROMA_RETRIES", "5"))
+    CHROMA_RETRY_DELAY = int(os.getenv("CHROMA_RETRY_DELAY", "5"))
     CHROMA_SERVICE_NAME = "chroma"
     CHROMA_PROJECT_ID = os.getenv("RAILWAY_PROJECT_ID")
     CHROMA_ENVIRONMENT = os.getenv("RAILWAY_ENVIRONMENT_NAME", "production")
@@ -56,13 +52,6 @@ class Settings:
     # 停用遙測
     os.environ["ANONYMIZED_TELEMETRY"] = "False"
     
-    # 其他 ChromaDB 設定
-    CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY")
-    
-    # 重試設定
-    CHROMA_RETRIES = int(os.getenv("CHROMA_RETRIES", "5"))
-    CHROMA_RETRY_DELAY = int(os.getenv("CHROMA_RETRY_DELAY", "5"))
-
     # 安全性設定
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
