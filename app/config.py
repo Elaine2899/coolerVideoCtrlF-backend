@@ -1,74 +1,85 @@
+# 載入必要的套件
 import os
 import logging
 import chromadb
 from typing import List
 from dotenv import load_dotenv
 
-# Load environment variables
+# 載入 .env 檔案中的環境變數
 load_dotenv()
 
-# Configure logging
+# 設定日誌系統
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Settings:
-    # API Settings
+    # API 基本設定
     API_TITLE = "Video Search API"
     API_VERSION = "1.0"
     API_DESCRIPTION = "基於 FastAPI 的影片搜尋 API"
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+    
+    # Railway 會自動設定 PORT 環境變數
     PORT = int(os.getenv("PORT", "8000"))
 
-    # Database Settings
+    # 資料庫設定
+    # 優先使用 DATABASE_URL，若無則使用 POSTGRES_URL
     DATABASE_URL = os.getenv(
         "DATABASE_URL",
         os.getenv("POSTGRES_URL", "postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@switchyard.proxy.rlwy.net:43353/railway")
     )
     
-    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "5"))
-    DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "10"))
-    DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
-    DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800"))
+    # 資料庫連線池設定
+    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "5"))      # 連線池大小
+    DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "10")) # 最大溢出連線數
+    DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30")) # 連線超時時間
+    DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
-    # ChromaDB Settings
+    # ChromaDB 設定
+    # 優先使用 CHROMA_HOST，若無則使用 CHROMADB_URL
     CHROMA_HOST = os.getenv("CHROMA_HOST", os.getenv("CHROMADB_URL", "localhost"))
     CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
+    # 完整的 ChromaDB URL
     CHROMA_URL = os.getenv("CHROMADB_URL", f"http://{CHROMA_HOST}:{CHROMA_PORT}")
+    # ChromaDB API 金鑰設定
     CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY", os.getenv("CHROMA_API_KEY"))
     CHROMA_AUTH_ENABLED = os.getenv("CHROMA_AUTH_ENABLED", "false").lower() == "true"
     CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "video_embeddings")
 
-    # Security Settings
+    # 安全性設定
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
-    # CORS Settings
+    # CORS 設定（跨域資源共享）
     CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "*").split(",")
     CORS_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE"]
     CORS_HEADERS: List[str] = ["*"]
 
-    # Cache Settings
+    # 快取設定
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     CACHE_EXPIRE_IN_SECONDS: int = int(os.getenv("CACHE_EXPIRE_IN_SECONDS", "3600"))
 
     def __init__(self):
+        """初始化設定並進行驗證"""
         self._validate_settings()
         self._log_config()
     
     def _validate_settings(self):
-        """驗證關鍵設定"""
+        """驗證關鍵設定是否正確配置"""
         if not self.DATABASE_URL:
             raise ValueError("Database URL is not configured")
         if not self.CHROMA_URL:
             raise ValueError("ChromaDB URL is not configured")
 
     def _log_config(self):
-        """記錄重要配置信息"""
+        """記錄重要配置信息，但隱藏敏感資訊"""
+        # 移除資料庫 URL 中的敏感資訊
         safe_db_url = self.DATABASE_URL.split("@")[-1] if self.DATABASE_URL else "Not configured"
         logger.info(f"Database URL: postgresql://*****@{safe_db_url}")
         logger.info(f"ChromaDB URL: {self.CHROMA_URL}")
         logger.info(f"API Version: {self.API_VERSION}")
         logger.info(f"Debug Mode: {self.DEBUG}")
+        # 警告如果 CORS 設定為允許所有來源
         if "*" in self.CORS_ORIGINS:
             logger.warning("Warning: CORS is set to allow all origins (*)")
 
@@ -98,4 +109,5 @@ class ChromaDBClient:
             logger.error(f"Failed to initialize ChromaDB client: {e}")
             raise
 
+# 建立全域設定實例
 settings = Settings()
