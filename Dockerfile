@@ -12,6 +12,16 @@ COPY requirements.txt .
 # --no-cache-dir 可以減少映像大小
 RUN pip install --no-cache-dir -r requirements.txt
 
+# 安裝基本系統套件
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 設置環境變數
+ENV PORT=8000 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 # 4. 複製後端程式碼
 # 將所有源代碼複製到容器中
 COPY . .
@@ -21,8 +31,12 @@ COPY . .
 # 注意：實際端口可能會被 Railway 的環境變量覆蓋
 EXPOSE 8000
 
+# 健康檢查
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
 # 6. 啟動 FastAPI 應用
 # host 0.0.0.0 允許外部訪問
 # Railway 會自動處理負載均衡和運行環境
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
 

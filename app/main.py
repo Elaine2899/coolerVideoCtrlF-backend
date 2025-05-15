@@ -29,20 +29,23 @@ app.add_middleware(
 # 應用啟動時執行的函數
 @app.on_event("startup")
 async def startup():
+    # 應用啟動時執行的函數
     # 初始化資料庫
     try:
         init_db()
-        print("Database initialized successfully")
+        logger.info("✅ Database initialized successfully")
     except Exception as e:
-        print(f"Database initialization error: {e}")
+        logger.error(f"❌ Database initialization failed: {e}")
         raise
 
     # 初始化 ChromaDB 連線
     try:
-        ChromaDBClient.get_instance()
-        print("ChromaDB connection initialized successfully")
+        chroma_client = ChromaDBClient.get_instance()
+        # 測試連線
+        chroma_client.get_client().list_collections()
+        logger.info("✅ ChromaDB initialized successfully")
     except Exception as e:
-        print(f"ChromaDB connection error: {e}")
+        logger.error(f"❌ ChromaDB initialization failed: {e}")
         raise
 
 # 註冊路由
