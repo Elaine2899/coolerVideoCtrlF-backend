@@ -1,14 +1,12 @@
 import psycopg2
-
+from download_video import login_postgresql
 # 改成你自己的 Render 資料庫資訊
-conn = psycopg2.connect(
-    host = 'switchyard.proxy.rlwy.net',#這邊是看外部連線的連結名稱，那一長串要從中間找出我們要的!
-    port = 43353,
-    user = 'postgres',
-    password = 'pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM',
-    database = 'railway'
-)
-print("成功")
+try:
+    conn = login_postgresql()
+    print("成功")
+except Exception as e:
+        print(" 連線失敗：", e)
+        
 cursor = conn.cursor()
 # 建立 videos 資料表
 cursor.execute("""

@@ -54,20 +54,13 @@ def time_str_to_str(tstr):
 
 def login_postgresql():
     print(" 請登入 PostgreSQL 資料庫")
-
-    host = 'switchyard.proxy.rlwy.net'#這邊是看外部連線的連結名稱，那一長串要從中間找出我們要的!
-    port = 43353
-    user = 'postgres'
-    password = 'pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM'
-    db_name = 'railway'
+    
     try:
-        conn = psycopg2.connect(
-            host=host,
-            port=port,
-            user=user,
-            password=password,
-            dbname=db_name
+        DATABASE_URL = (
+            os.getenv("DATABASE_URL") or 
+            "postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@switchyard.proxy.rlwy.net:43353/railway"
         )
+        conn = psycopg2.connect(DATABASE_URL)
         print(" 成功連線到 PostgreSQL！")
         return conn
     except Exception as e:
@@ -257,11 +250,11 @@ def clean_text(text):#清理字幕檔
     text = re.sub(r'WEBVTT.*?\n', '', text, flags=re.DOTALL)
     text = re.sub(r'\[[^\]]+\]', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
-    
+
     return text
 
 if __name__ == "__main__":
-    keyword = [
+    keyword = [ 
     "What are the basic components of a computer system?",
     "What is the difference between hardware and software?",
     "How does the CPU execute instructions?",
