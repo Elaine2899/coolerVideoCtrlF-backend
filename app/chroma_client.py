@@ -1,6 +1,12 @@
+import os
+import logging
 import chromadb
-from fastapi import FastAPI
+from typing import Optional
 from .config import settings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ChromaDBClient:
     _instance = None
@@ -13,19 +19,27 @@ class ChromaDBClient:
         return cls._instance
     
     def __init__(self):
-        self._client = chromadb.HttpClient(
-            host=settings.CHROMA_HOST,
-            port=settings.CHROMA_PORT
-        )
-        logger.info(f"ChromaDB client initialized with URL: {settings.CHROMA_URL}")
-        
+        try:
+            kwargs = {
+                "host": settings.CHROMA_HOST,
+                "port": settings.CHROMA_PORT,
+            }
+            
+            if settings.CHROMA_API_KEY:
+                kwargs["api_key"] = settings.CHROMA_API_KEY
+                
+            self._client = chromadb.HttpClient(**kwargs)
+            logger.info(f"ChromaDB client initialized with URL: {settings.CHROMA_URL}")
+        except Exception as e:
+            logger.error(f"Failed to initialize ChromaDB client: {e}")
+            raise
+    
     def get_client(self):
         return self._client
     
-    def get_collection(self, collection_name="video_embeddings"):
-        return self._client.get_or_create_collection(name=collection_name)
-
-# 在其他檔案中使用:
-# from app.chroma_client import ChromaDBClient
-# chroma_client = ChromaDBClient.get_instance().get_client()
-# collection = ChromaDBClient.get_instance().get_collection()
+    def get_collection(self, collection_name: str = "video_embeddings"):
+        try:
+            return self._client.get_or_create_collection(name=collection_name)
+        except Exception as e:
+            logger.error(f"Failed to get collection {collection_name}: {e}")
+            raise
