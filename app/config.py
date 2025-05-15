@@ -36,18 +36,28 @@ class Settings:
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
     # ChromaDB 設定
-    # 優先使用 CHROMA_HOST，若無則使用 CHROMADB_URL
-    CHROMA_HOST = os.getenv("CHROMA_HOST", os.getenv("CHROMADB_URL", "localhost"))
-    CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
-    CHROMA_SSL = os.getenv("CHROMA_SSL", "false").lower() == "true"
-    CHROMA_URL = os.getenv(
-        "CHROMADB_URL", 
-        f"{'https' if CHROMA_SSL else 'http'}://{CHROMA_HOST}:{CHROMA_PORT}"
+    # 使用 Railway 的服務發現機制
+    CHROMA_HOST = os.getenv(
+        "CHROMA_HOST",
+        os.getenv("RAILWAY_PRIVATE_DOMAIN", "localhost")  # 使用 Railway 私有域名
     )
-    # ChromaDB API 金鑰設定
-    CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY", os.getenv("CHROMA_API_KEY"))
-    CHROMA_AUTH_ENABLED = os.getenv("CHROMA_AUTH_ENABLED", "false").lower() == "true"
-    CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "video_embeddings")
+    CHROMA_PORT = int(os.getenv("PORT", "8000"))
+    CHROMA_URL = os.getenv(
+        "CHROMADB_URL",
+        f"http://{os.getenv('RAILWAY_PUBLIC_DOMAIN')}"  # 使用 Railway 公開域名
+        if os.getenv('RAILWAY_PUBLIC_DOMAIN')
+        else f"http://{CHROMA_HOST}:{CHROMA_PORT}"
+    )
+    
+    # 其他 ChromaDB 設定
+    CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY")
+    CHROMA_SERVICE_NAME = os.getenv("RAILWAY_SERVICE_NAME", "chroma")
+    CHROMA_PROJECT_ID = os.getenv("RAILWAY_PROJECT_ID")
+    CHROMA_ENVIRONMENT = os.getenv("RAILWAY_ENVIRONMENT_NAME", "production")
+    
+    # 重試設定
+    CHROMA_RETRIES = int(os.getenv("CHROMA_RETRIES", "5"))
+    CHROMA_RETRY_DELAY = int(os.getenv("CHROMA_RETRY_DELAY", "5"))
 
     # 安全性設定
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
@@ -80,6 +90,8 @@ class Settings:
         safe_db_url = self.DATABASE_URL.split("@")[-1] if self.DATABASE_URL else "Not configured"
         logger.info(f"Database URL: postgresql://*****@{safe_db_url}")
         logger.info(f"ChromaDB URL: {self.CHROMA_URL}")
+        logger.info(f"ChromaDB Service: {self.CHROMA_SERVICE_NAME}")
+        logger.info(f"ChromaDB Environment: {self.CHROMA_ENVIRONMENT}")
         logger.info(f"API Version: {self.API_VERSION}")
         logger.info(f"Debug Mode: {self.DEBUG}")
         # 警告如果 CORS 設定為允許所有來源

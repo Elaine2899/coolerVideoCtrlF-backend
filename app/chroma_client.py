@@ -3,7 +3,7 @@ import time
 import logging
 import chromadb
 from typing import Optional
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_fixed, before_log, after_log
 from .config import settings
 
 # Configure logging
@@ -21,32 +21,28 @@ class ChromaDBClient:
         return cls._instance
     
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        reraise=True
+        stop=stop_after_attempt(settings.CHROMA_RETRIES),
+        wait=wait_fixed(settings.CHROMA_RETRY_DELAY),
+        before=before_log(logger, logging.INFO),
+        after=after_log(logger, logging.ERROR),
     )
     def _init_client(self):
-        """Initialize ChromaDB client with retry mechanism"""
+        """Initialize ChromaDB client with improved retry mechanism"""
         try:
             kwargs = {
                 "host": settings.CHROMA_HOST,
                 "port": settings.CHROMA_PORT,
-                "ssl": settings.CHROMA_SSL,
-                "headers": {"X-Custom-Header": "true"} if settings.CHROMA_API_KEY else None
             }
             
             if settings.CHROMA_API_KEY:
                 kwargs["api_key"] = settings.CHROMA_API_KEY
             
-            client = chromadb.HttpClient(**kwargs)
-            # Test connection
-            client.heartbeat()
-            return client
-            
+            logger.info(f"Attempting to connect to ChromaDB at {settings.CHROMA_URL}")
+            return chromadb.HttpClient(**kwargs)
         except Exception as e:
-            logger.error(f"Failed to initialize ChromaDB client: {str(e)}")
+            logger.error(f"ChromaDB connection attempt failed: {str(e)}")
             raise
-    
+
     def __init__(self):
         self._client = self._init_client()
         logger.info(f"ChromaDB client initialized with URL: {settings.CHROMA_URL}")

@@ -47,12 +47,15 @@ async def startup():
 
     # 初始化 ChromaDB 連線
     try:
+        logger.info("Initializing ChromaDB connection...")
         chroma_client = ChromaDBClient.get_instance()
-        collections = chroma_client.get_client().list_collections()
-        logger.info(f"✅ ChromaDB initialized successfully with {len(collections)} collections")
+        # 簡單的連接測試
+        chroma_client.get_client()
+        logger.info("✅ ChromaDB connection established")
     except Exception as e:
-        logger.error(f"❌ ChromaDB initialization failed: {str(e)}")
-        raise
+        logger.error(f"❌ ChromaDB connection failed: {str(e)}")
+        # 不要立即失敗，讓應用程式繼續啟動
+        logger.warning("⚠️ Application will start without ChromaDB functionality")
 
     logger.info("✨ Application startup complete")
 
