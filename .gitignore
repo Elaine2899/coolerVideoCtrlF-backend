@@ -39,3 +39,6 @@ local_settings.py
 .coverage
 htmlcov/
 .pytest_cache/
+
+#gemini key
+config.ini

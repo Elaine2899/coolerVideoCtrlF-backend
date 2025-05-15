@@ -8,7 +8,6 @@ load_dotenv()  # 加在所有 import 之前
 import os
 print("DEBUG → DATABASE_URL: ", os.getenv("DATABASE_URL"))
 
-
 app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +36,7 @@ except Exception as e:
 # ✅ 提供給 router 使用的 get_db 函數
 def get_db():
     db = SessionLocal()
+    print("OK")
     try:
         yield db
     finally:
