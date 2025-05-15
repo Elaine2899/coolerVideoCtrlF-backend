@@ -29,18 +29,21 @@ class ChromaDBClient:
     def _init_client(self):
         """Initialize ChromaDB client with improved retry mechanism"""
         try:
+            # 使用內部服務發現機制
             kwargs = {
                 "host": settings.CHROMA_HOST,
-                "port": settings.CHROMA_PORT,
+                "ssl": False  # Railway 內部通信不需要 SSL
             }
             
-            if settings.CHROMA_API_KEY:
-                kwargs["api_key"] = settings.CHROMA_API_KEY
+            logger.info(f"Connecting to ChromaDB service at: {settings.CHROMA_URL}")
+            logger.info(f"Using ChromaDB service: {settings.CHROMA_SERVICE_NAME}")
             
-            logger.info(f"Attempting to connect to ChromaDB at {settings.CHROMA_URL}")
-            return chromadb.HttpClient(**kwargs)
+            client = chromadb.HttpClient(**kwargs)
+            client.heartbeat()  # 測試連接
+            return client
+            
         except Exception as e:
-            logger.error(f"ChromaDB connection attempt failed: {str(e)}")
+            logger.error(f"ChromaDB connection failed: {str(e)}")
             raise
 
     def __init__(self):

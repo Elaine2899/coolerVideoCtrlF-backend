@@ -36,24 +36,28 @@ class Settings:
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
     # ChromaDB 設定
-    # 使用 Railway 的服務發現機制
+    # 使用專門的 chroma 服務地址
     CHROMA_HOST = os.getenv(
         "CHROMA_HOST",
-        os.getenv("RAILWAY_PRIVATE_DOMAIN", "localhost")  # 使用 Railway 私有域名
-    )
-    CHROMA_PORT = int(os.getenv("PORT", "8000"))
+        os.getenv("RAILWAY_PRIVATE_DOMAIN", "localhost")
+    ).replace("coolervideoctrlf-backend", "chroma")  # 指向 chroma 服務
+    
+    # ChromaDB URL（使用內部服務發現）
     CHROMA_URL = os.getenv(
         "CHROMADB_URL",
-        f"http://{os.getenv('RAILWAY_PUBLIC_DOMAIN')}"  # 使用 Railway 公開域名
-        if os.getenv('RAILWAY_PUBLIC_DOMAIN')
-        else f"http://{CHROMA_HOST}:{CHROMA_PORT}"
-    )
+        f"http://{os.getenv('RAILWAY_PRIVATE_DOMAIN', CHROMA_HOST)}"
+    ).replace("coolervideoctrlf-backend", "chroma")
+    
+    # 使用對應的服務名稱
+    CHROMA_SERVICE_NAME = "chroma"
+    CHROMA_PROJECT_ID = os.getenv("RAILWAY_PROJECT_ID")
+    CHROMA_ENVIRONMENT = os.getenv("RAILWAY_ENVIRONMENT_NAME", "production")
+    
+    # 停用遙測
+    os.environ["ANONYMIZED_TELEMETRY"] = "False"
     
     # 其他 ChromaDB 設定
     CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY")
-    CHROMA_SERVICE_NAME = os.getenv("RAILWAY_SERVICE_NAME", "chroma")
-    CHROMA_PROJECT_ID = os.getenv("RAILWAY_PROJECT_ID")
-    CHROMA_ENVIRONMENT = os.getenv("RAILWAY_ENVIRONMENT_NAME", "production")
     
     # 重試設定
     CHROMA_RETRIES = int(os.getenv("CHROMA_RETRIES", "5"))
@@ -94,6 +98,9 @@ class Settings:
         logger.info(f"ChromaDB Environment: {self.CHROMA_ENVIRONMENT}")
         logger.info(f"API Version: {self.API_VERSION}")
         logger.info(f"Debug Mode: {self.DEBUG}")
+        logger.info(f"Attempting to connect to ChromaDB at: {self.CHROMA_URL}")
+        logger.info(f"ChromaDB Host: {self.CHROMA_HOST}")
+        logger.info(f"ChromaDB Service Name: {self.CHROMA_SERVICE_NAME}")
         # 警告如果 CORS 設定為允許所有來源
         if "*" in self.CORS_ORIGINS:
             logger.warning("Warning: CORS is set to allow all origins (*)")
