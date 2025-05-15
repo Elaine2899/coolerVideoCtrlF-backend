@@ -18,7 +18,11 @@ class Settings:
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     
     # 資料庫設定
-    DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL") or "postgresql://postgres:password@localhost:5432/videodb"
+    DATABASE_URL = (
+        os.getenv("DATABASE_URL") or 
+        os.getenv("DATABASE_PUBLIC_URL") or 
+        "postgresql://postgres:postgres@railway.railway.internal:5432/railway"
+    )
     DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "5"))
     DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "10"))
     DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
@@ -43,6 +47,11 @@ class Settings:
     CACHE_EXPIRE_IN_SECONDS: int = int(os.getenv("CACHE_EXPIRE_IN_SECONDS", "3600"))
 
     def __init__(self):
+        # 移除敏感資訊
+        safe_db_url = self.DATABASE_URL.replace(
+            self.DATABASE_URL.split("@")[0], "postgresql://****:****"
+        )
+        logger.info(f"Using Database URL: {safe_db_url}")
         self._log_config()
     
     def _log_config(self):

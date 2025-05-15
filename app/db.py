@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 from .config import settings
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,12 +35,20 @@ Base = declarative_base()
 
 # 初始化資料庫，建立所有定義的表格
 def init_db():
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("Successfully initialized database")
-    except SQLAlchemyError as e:
-        logger.error(f"Database initialization failed: {e}")
-        raise
+    retry_count = 0
+    max_retries = 3
+    
+    while retry_count < max_retries:
+        try:
+            Base.metadata.create_all(bind=engine)
+            logger.info("✅ Database initialized successfully")
+            return
+        except SQLAlchemyError as e:
+            retry_count += 1
+            logger.error(f"❌ Database initialization attempt {retry_count} failed: {e}")
+            if retry_count == max_retries:
+                raise
+            time.sleep(2 ** retry_count)  # 指數退避
 
 # ✅ 給 router 調用用的 Session dependency
 def get_db():
