@@ -35,15 +35,14 @@ class Settings:
     DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30")) # 連線超時時間
     DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800")) # 連線回收時間
 
-    # ChromaDB 設定
+    # ChromaDB 設定 - 簡化且強制 HTTPS
     CHROMA_HOST = os.getenv("CHROMA_HOST", "chroma-production-84ca.up.railway.app")
-    CHROMA_PORT = int(os.getenv("CHROMA_PORT", "443"))
-    CHROMA_SSL = os.getenv("CHROMA_SSL", "true").lower() == "true"
+    CHROMA_PORT = 443  # 固定使用 HTTPS 標準端口
+    CHROMA_SSL = True  # 強制使用 HTTPS
     
-    # URL 設定
+    # URL 設定 - 統一使用 HTTPS
     CHROMA_URL = f"https://{CHROMA_HOST}"
     CHROMA_PUBLIC_URL = CHROMA_URL
-    CHROMA_INTERNAL_URL = f"http://chroma.railway.internal:8000"
     
     # 其他 ChromaDB 設定
     CHROMA_API_KEY = os.getenv("CHROMADB_API_KEY")
@@ -94,7 +93,6 @@ class Settings:
         logger.info(f"Attempting to connect to ChromaDB at: {self.CHROMA_URL}")
         logger.info(f"ChromaDB Host: {self.CHROMA_HOST}")
         logger.info(f"ChromaDB Service Name: {self.CHROMA_SERVICE_NAME}")
-        logger.info(f"ChromaDB Internal URL: {self.CHROMA_INTERNAL_URL}")
         logger.info(f"ChromaDB Public URL: {self.CHROMA_PUBLIC_URL}")
         # 警告如果 CORS 設定為允許所有來源
         if "*" in self.CORS_ORIGINS:
