@@ -257,6 +257,7 @@ def clean_text(text):#清理字幕檔
     text = re.sub(r'WEBVTT.*?\n', '', text, flags=re.DOTALL)
     text = re.sub(r'\[[^\]]+\]', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
+    
     return text
 
 if __name__ == "__main__":
