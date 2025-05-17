@@ -17,14 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 設置環境變數 - 修改PORT為8080
+# 設置環境變數
 ENV PORT=8080 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
 # 4. 複製後端程式碼
-# 將所有源代碼複製到容器中
 COPY . /app/
 
 # 5. 暴露 8000 端口
@@ -32,7 +31,7 @@ COPY . /app/
 # 注意：實際端口可能會被 Railway 的環境變量覆蓋
 EXPOSE 8080
 
-# 健康檢查 - 確保使用正確的PORT
+# 健康檢查
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
@@ -43,16 +42,12 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
 
 # 更新 CMD 使用 gunicorn 並設定多個工作者
-RUN pip install gunicorn
+# RUN pip install gunicorn
 
-# 使用 gunicorn 和多個工作者以獲得更好的效能
+# 啟動命令
 CMD gunicorn app.main:app \
     --workers 2 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:$PORT \
     --timeout 120 \
-    --max-requests 1000 \
-    --max-requests-jitter 50 \
-    --access-logfile - \
-    --error-logfile - \
     --log-level info

@@ -15,7 +15,7 @@ videoVenv/
 # Python
 __pycache__/
 *.py[cod]
-*.so
+*$py.class
 
 # IDE
 .vscode/
@@ -31,3 +31,6 @@ __pycache__/
 # Test coverage
 .coverage
 htmlcov/
+
+# Docker
+.docker/
