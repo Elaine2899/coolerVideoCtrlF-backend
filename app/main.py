@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 import datetime
 import logging
 import uvicorn
+import os
 
 # 修改導入方式
 from app.config import settings
@@ -104,9 +105,10 @@ async def root():
     }
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", settings.PORT))
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=settings.PORT,
+        port=port,
         reload=settings.DEBUG
     )

@@ -20,7 +20,7 @@ class Settings:
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     
     # Railway 會自動設定 PORT 環境變數
-    PORT = int(os.getenv("PORT", "8000"))
+    PORT = int(os.getenv("PORT", "8080"))  # Change default to 8080
 
     # 資料庫設定
     # 優先使用 DATABASE_URL，若無則使用 POSTGRES_URL
