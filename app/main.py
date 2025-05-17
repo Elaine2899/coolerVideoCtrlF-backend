@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 import datetime
 import logging
+import uvicorn
 
 # 修改導入方式
 from app.config import settings
@@ -101,3 +102,11 @@ async def root():
         "message": "Video Search API 運行中",
         "version": settings.API_VERSION
     }
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=settings.PORT,
+        reload=settings.DEBUG
+    )
