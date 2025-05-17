@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 設置環境變數
+# 設置環境變數 - 修改PORT為8080
 ENV PORT=8080 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -30,19 +30,11 @@ COPY . .
 # 5. 暴露 8000 端口
 # Railway 會自動映射這個端口到外部
 # 注意：實際端口可能會被 Railway 的環境變量覆蓋
-EXPOSE 8000
+EXPOSE 8080
 
-# 健康檢查
+# 健康檢查 - 確保使用正確的PORT
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# 6. 啟動 FastAPI 應用
-# host 0.0.0.0 允許外部訪問
-# Railway 會自動處理負載均衡和運行環境
-
-# CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
-# # CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
-# # CMD exec uvicorn app.main:app --host 0.0.0.0 --port $PORT
-
-# 使用 Python 代碼中的 settings.PORT
-CMD ["python", "-m", "app.main"]
+# 使用uvicorn直接啟動，確保使用正確的PORT
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
