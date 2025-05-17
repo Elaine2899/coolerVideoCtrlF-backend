@@ -2,7 +2,6 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 import datetime
 import logging
-import uvicorn
 import os
 
 # 修改導入方式
@@ -104,10 +103,12 @@ async def root():
         "version": settings.API_VERSION
     }
 
-# if __name__ == "__main__":
-#     port = int(os.getenv("PORT", "8080"))
-#     uvicorn.run(
-#         app,
-#         host="0.0.0.0",
-#         port=port
-#     )
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", "8080"))
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=settings.DEBUG
+    )

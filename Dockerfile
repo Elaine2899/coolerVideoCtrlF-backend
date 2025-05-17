@@ -40,4 +40,14 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
 # CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
 # CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+# CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+
+# 更新 CMD 使用 gunicorn 並設定多個工作者
+RUN pip install gunicorn
+
+# 使用 gunicorn 和多個工作者以獲得更好的效能
+CMD gunicorn app.main:app \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:$PORT \
+    --timeout 120
