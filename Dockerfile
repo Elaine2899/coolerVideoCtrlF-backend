@@ -41,4 +41,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # Railway 會自動處理負載均衡和運行環境
 
 # CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
-CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+# CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port $PORT
