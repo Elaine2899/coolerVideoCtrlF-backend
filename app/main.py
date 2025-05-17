@@ -90,6 +90,9 @@ def chroma_check():
             "status": "ChromaDB connection failed",
             "error": str(e)
         }
+    
+# test
+logger.info("✅ FastAPI app instance created at root level")
 
 # 根路由
 @app.get("/")
