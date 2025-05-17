@@ -25,7 +25,7 @@ ENV PORT=8080 \
 
 # 4. 複製後端程式碼
 # 將所有源代碼複製到容器中
-COPY . .
+COPY . /app/
 
 # 5. 暴露 8000 端口
 # Railway 會自動映射這個端口到外部
@@ -37,4 +37,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # 使用uvicorn直接啟動，確保使用正確的PORT
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
