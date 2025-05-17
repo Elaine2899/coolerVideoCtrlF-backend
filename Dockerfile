@@ -39,4 +39,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # 使用uvicorn直接啟動，確保使用正確的PORT
 # CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
 # CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
-CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+# CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
