@@ -67,11 +67,13 @@ app.include_router(chroma_router)
 # 健康檢查端點
 @app.get("/health")
 def health_check():
+    print("✅ /health called")
     return {
         "status": "healthy",
         "version": settings.API_VERSION,
         "timestamp": datetime.datetime.now().isoformat()
     }
+
 
 @app.get("/db-check")
 def db_check(db: Session = Depends(get_db)):
