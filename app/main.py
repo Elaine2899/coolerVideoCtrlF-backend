@@ -67,10 +67,12 @@ app.include_router(chroma_router)
 # 健康檢查端點
 @app.get("/health")
 def health_check():
-    print("✅ /health called")
+    port = os.environ.get("PORT")
+    print(f"✅ /health called on PORT={port}")
     return {
         "status": "healthy",
         "version": settings.API_VERSION,
+        "port": port,
         "timestamp": datetime.datetime.now().isoformat()
     }
 

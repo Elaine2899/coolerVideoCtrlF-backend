@@ -45,8 +45,15 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # RUN pip install gunicorn
 
 # 啟動命令
+# CMD gunicorn app.main:app \
+#     --workers 2 \
+#     --worker-class uvicorn.workers.UvicornWorker \
+#     --bind 0.0.0.0:$PORT \
+#     --timeout 120 \
+#     --log-level info
+
 CMD gunicorn app.main:app \
-    --workers 2 \
+    --workers 1 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:$PORT \
     --timeout 120 \
