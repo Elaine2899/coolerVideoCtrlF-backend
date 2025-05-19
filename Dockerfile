@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 設置環境變數
-ENV PORT=8080 \
+ENV PORT=8000 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
@@ -29,7 +29,7 @@ COPY . /app/
 # 5. 暴露 8000 端口
 # Railway 會自動映射這個端口到外部
 # 注意：實際端口可能會被 Railway 的環境變量覆蓋
-EXPOSE 8080
+EXPOSE 8000
 
 # 健康檢查
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \

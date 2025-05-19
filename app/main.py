@@ -102,6 +102,7 @@ logger.info("✅ FastAPI app instance created at root level")
 # 根路由
 @app.get("/")
 async def root():
+    print("測試")# by_timlin
     return {
         "message": "Video Search API 運行中",
         "version": settings.API_VERSION
