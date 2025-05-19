@@ -45,3 +45,4 @@ def get_db():
 @app.get("/db-check")
 def db_check(db: Session = Depends(get_db)):
     return {"status": "Database connection successful"}
+
