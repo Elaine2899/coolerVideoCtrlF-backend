@@ -61,7 +61,7 @@ def get_db():
     finally:
         db.close()
 
-#連線至postgreSQL資料庫
+#連線至postgreSQL資料庫 timlin_test
 def login_postgresql():
     print(" 請登入 PostgreSQL 資料庫")
     
