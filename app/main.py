@@ -106,7 +106,7 @@ logger.info("✅ FastAPI app instance created at root level")
 @app.get("/")
 async def root():
     return {
-        "message": "Video Search API 運行中",
+        "message": "Video Search API 運行",
         "version": settings.API_VERSION
     }
 
