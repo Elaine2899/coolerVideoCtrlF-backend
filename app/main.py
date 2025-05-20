@@ -111,7 +111,7 @@ async def root():
     }
 
 #timlin_test
-@app.get("/show_video")
+@app.get("/show_videos")
 def show_videos():#顯示多部影片 v_ids陣列進來
     v_id = 20 #試抓
     conn = login_postgresql()
@@ -126,6 +126,7 @@ def show_videos():#顯示多部影片 v_ids陣列進來
         "embed_url":url
     }
     
+
 # if __name__ == "__main__":
 #     import uvicorn
 #     port = int(os.getenv("PORT", "8080"))
