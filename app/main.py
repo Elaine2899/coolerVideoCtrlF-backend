@@ -10,7 +10,7 @@ from app.db import get_db, init_db
 from app.api import video_router, chroma_router
 from app.chroma_client import ChromaDBClient
 
-#載入postgresql
+#載入postgresql連線
 from app.db import login_postgresql
 
 # 設定日誌
@@ -112,16 +112,15 @@ async def root():
 
 #timlin_test
 @app.get("/show_video")
-def show_video():
-    v_id = 20 #試抓一個影片顯示
+def show_videos():#顯示多部影片 v_ids陣列進來
+    v_id = 20 #試抓
     conn = login_postgresql()
     cursor = conn.cursor()
-    cursor.execute("SELECT embed_url FROM videos where id = 20")
+    cursor.execute("SELECT embed_url FROM videos WHERE id = %s", (v_id,))
     url = cursor.fetchall()
     conn.commit()
     cursor.close()
     conn.close()
-    print("好棒棒")
     return {
         "message": "成功顯示embed_url(內嵌碼)",
         "embed_url":url
