@@ -116,13 +116,17 @@ def show_video():
     v_id = 20 #試抓一個影片顯示
     conn = login_postgresql()
     cursor = conn.cursor()
-    cursor.excute("SELECT embed_url FROM videos where id = {s}",v_id)
+    cursor.execute("SELECT embed_url FROM videos where id = {s}",v_id)
     url = cursor.fetchall()
-    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print("好棒棒")
     return {
         "message": "成功顯示embed_url(內嵌碼)",
         "embed_url":url
     }
+    
 # if __name__ == "__main__":
 #     import uvicorn
 #     port = int(os.getenv("PORT", "8080"))
