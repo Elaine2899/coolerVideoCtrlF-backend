@@ -116,7 +116,7 @@ def show_video():
     v_id = 20 #試抓一個影片顯示
     conn = login_postgresql()
     cursor = conn.cursor()
-    cursor.execute("SELECT embed_url FROM videos where id = {s}",v_id)
+    cursor.execute("SELECT embed_url FROM videos where id = 20")
     url = cursor.fetchall()
     conn.commit()
     cursor.close()
