@@ -100,5 +100,6 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 );
 """)
 print("✅ 成功建立三個user資料表！")
+conn.commit()
 cursor.close()
 conn.close()

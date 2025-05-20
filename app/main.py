@@ -10,6 +10,9 @@ from app.db import get_db, init_db
 from app.api import video_router, chroma_router
 from app.chroma_client import ChromaDBClient
 
+#載入postgresql
+from app.db import login_postgresql
+
 # 設定日誌
 logger = logging.getLogger(__name__)
 
@@ -102,12 +105,24 @@ logger.info("✅ FastAPI app instance created at root level")
 # 根路由
 @app.get("/")
 async def root():
-    print("測試")# by_timlin
     return {
         "message": "Video Search API 運行中",
         "version": settings.API_VERSION
     }
 
+#timlin_test
+@app.get("/show_video")
+def show_video():
+    v_id = 20 #試抓一個影片顯示
+    conn = login_postgresql()
+    cursor = conn.cursor()
+    cursor.excute("SELECT embed_url FROM videos where id = {s}",v_id)
+    url = cursor.fetchall()
+    
+    return {
+        "message": "成功顯示embed_url(內嵌碼)",
+        "embed_url":url
+    }
 # if __name__ == "__main__":
 #     import uvicorn
 #     port = int(os.getenv("PORT", "8080"))

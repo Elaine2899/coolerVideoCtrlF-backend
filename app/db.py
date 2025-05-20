@@ -8,6 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from .config import settings
 import time
 
+#載入psycopg2連線
+import psycopg2
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -57,3 +60,19 @@ def get_db():
         yield db
     finally:
         db.close()
+
+#連線至postgreSQL資料庫
+def login_postgresql():
+    print(" 請登入 PostgreSQL 資料庫")
+    
+    try:
+        DATABASE_URL = (
+            os.getenv("DATABASE_URL") or 
+            "postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@switchyard.proxy.rlwy.net:43353/railway"
+        )
+        conn = psycopg2.connect(DATABASE_URL)
+        print(" 成功連線到 PostgreSQL！")
+        return conn
+    except Exception as e:
+        print(" 連線失敗：", e)
+        exit()
