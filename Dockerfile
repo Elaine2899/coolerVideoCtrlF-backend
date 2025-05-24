@@ -15,6 +15,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 安裝基本系統套件
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    git \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 # 設置環境變數
