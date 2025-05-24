@@ -112,7 +112,7 @@ async def root():
 
 #timlin_test
 @app.get("/show_videos")
-def show_videos():#顯示多部影片 v_ids陣列進來
+def show_videos():#顯示多部影片回傳embed_urls ，未來應該是v_ids陣列進來
     v_id = 20 #試抓
     conn = login_postgresql()
     cursor = conn.cursor()
@@ -125,6 +125,16 @@ def show_videos():#顯示多部影片 v_ids陣列進來
         "message": "成功顯示embed_url(內嵌碼)",
         "embed_url":url
     }
+    '''
+    show_videos_url = []
+    conn = login_postgresql()
+    cursor = conn.cursor()
+    for v_id in v_ids:
+        cursor.execute("SELECT embed_url FROM videos WHERE id = %s", (v_id,))
+        url = cursor.fetchall()
+        show_videos_url.add(url)
+    print(show_videos_url)
+    '''
     
 
 # if __name__ == "__main__":
