@@ -9,6 +9,7 @@ WORKDIR /app
 # 3. 複製並安裝依賴
 # 先複製 requirements.txt 以利用 Docker 層快取機制
 COPY requirements.txt .
+RUN pip install --upgrade pip setuptools
 # --no-cache-dir 可以減少映像大小
 RUN pip install --no-cache-dir -r requirements.txt
 
