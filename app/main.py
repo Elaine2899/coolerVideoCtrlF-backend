@@ -37,7 +37,9 @@ app.add_middleware(
 async def startup():
     """應用啟動時執行的初始化函數"""
     logger.info("🚀 Starting application...")
-    
+    # 載入模型
+    from app.core.model_loader import load_models
+    load_models()
     # 初始化資料庫
     try:
         init_db()
