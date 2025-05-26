@@ -32,8 +32,7 @@ def tt_get_embedding(text):
 def st_get_embedding(text):
     return summary_embedder.encode(text, convert_to_tensor=True).to(summary_embedder.device)
 
-def update_topic_embeddings():
-    conn = login_postgresql()
+def update_topic_embeddings(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT topic FROM categories;")
     topics = [row[0] for row in cursor.fetchall()]
@@ -49,10 +48,8 @@ def update_topic_embeddings():
 
     conn.commit()
     cursor.close()
-    conn.close()
 
-def update_video_embeddings():
-    conn = login_postgresql()
+def update_video_embeddings(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT id, title, summary FROM videos;")
     videos = cursor.fetchall()
@@ -73,11 +70,11 @@ def update_video_embeddings():
 
     conn.commit()
     cursor.close()
-    conn.close()
+    
 
 
-def expand_query_topic(query_emb, top_k=5):
-    conn = login_postgresql()
+def expand_query_topic(query_emb, conn,top_k=5):
+    #conn = login_postgresql()
     cursor = conn.cursor()
     cursor.execute("SELECT topic FROM categories;")
     topics = [row[0] for row in cursor.fetchall()]
@@ -92,7 +89,7 @@ def expand_query_topic(query_emb, top_k=5):
     top_k_topics = [t for _, t in sims[:top_k]]
 
     cursor.close()
-    conn.close()
+
     return top_k_topics
 
 load_dotenv()
@@ -144,14 +141,12 @@ def generate_related_queries(input_text):
     related_queries = list(dict.fromkeys(related_queries))
     return related_queries
 
-def get_videos_by_topic_expansion(query):
+def get_videos_by_topic_expansion(query,conn):
     """
     完全保留你的第二版資料庫查詢邏輯
     """
     query_emb = tt_get_embedding(query)
-    expanded_topics = expand_query_topic(query_emb)
-
-    conn = login_postgresql()
+    expanded_topics = expand_query_topic(query_emb,conn)
     cursor = conn.cursor()
 
     cursor.execute("SELECT id FROM categories WHERE topic = ANY(%s);", (expanded_topics,))
@@ -180,11 +175,11 @@ def get_videos_by_topic_expansion(query):
     videos = cursor.fetchall()
     cursor.close()
     conn.close()
-
     return videos  # ✔ 提供 raw data，下一層處理
 
 def retrieve_top_k(query, k=5):
-    raw_videos = get_videos_by_topic_expansion(query)  # ✔ 撈資料
+    conn = login_postgresql()
+    raw_videos = get_videos_by_topic_expansion(query,conn)  # ✔ 撈資料
     results = []
 
     query_emb = title_topic_embedder.encode(query, convert_to_tensor=True).to(title_topic_embedder.device)
@@ -224,6 +219,8 @@ def retrieve_top_k(query, k=5):
     return expanded_queries,results[:k]
 
 if __name__ == '__main__':
-    update_topic_embeddings()
-    update_video_embeddings()
-
+    conn = login_postgresql()
+    update_topic_embeddings(conn)
+    update_video_embeddings(conn)
+    #tim:我在retrieve_top_k的地方加入postgreSQL的連結conn，給get_videos_by_topic_expansion、expand_query_topic當傳入參數
+    conn.close()
