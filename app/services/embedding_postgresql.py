@@ -52,13 +52,7 @@ def update_topic_embeddings():
     conn.close()
 
 def update_video_embeddings():
-    conn = psycopg2.connect(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DB
-    )
+    conn = login_postgresql()
     cursor = conn.cursor()
     cursor.execute("SELECT id, title, summary FROM videos;")
     videos = cursor.fetchall()
@@ -83,13 +77,7 @@ def update_video_embeddings():
 
 
 def expand_query_topic(query_emb, top_k=5):
-    conn = psycopg2.connect(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DB
-    )
+    conn = login_postgresql()
     cursor = conn.cursor()
     cursor.execute("SELECT topic FROM categories;")
     topics = [row[0] for row in cursor.fetchall()]
@@ -163,13 +151,7 @@ def get_videos_by_topic_expansion(query):
     query_emb = tt_get_embedding(query)
     expanded_topics = expand_query_topic(query_emb)
 
-    conn = psycopg2.connect(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DB
-    )
+    conn = login_postgresql()
     cursor = conn.cursor()
 
     cursor.execute("SELECT id FROM categories WHERE topic = ANY(%s);", (expanded_topics,))
