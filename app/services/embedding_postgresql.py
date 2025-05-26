@@ -10,13 +10,10 @@ from bertopic import BERTopic
 from dotenv import load_dotenv
 import google.generativeai as genai
 
+from db_utils import login_postgresql
 
 # ---------- 資料庫設定 ----------
-POSTGRES_USER = 'teammate'
-POSTGRES_PASSWORD = 'cGu5jdTwy4JLriDMylTlzNmW4S9jJHNF'
-POSTGRES_HOST = 'dpg-d0d4h8q4d50c73eeu1ng-a.oregon-postgres.render.com'
-POSTGRES_PORT = '5432'
-POSTGRES_DB = 'youtube_data_qkc5'
+
 
 # ---------- 初始化模型 ----------
 title_topic_embedder = SentenceTransformer('paraphrase-MiniLM-L6-v2', device='cuda' if torch.cuda.is_available() else 'cpu')#原本的embedder = SentenceTransformer('paraphrase-MiniLM-L6-v2')是384維度，和這個的1024不一樣
@@ -36,13 +33,7 @@ def st_get_embedding(text):
     return summary_embedder.encode(text, convert_to_tensor=True).to(summary_embedder.device)
 
 def update_topic_embeddings():
-    conn = psycopg2.connect(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DB
-    )
+    conn = login_postgresql()
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT topic FROM categories;")
     topics = [row[0] for row in cursor.fetchall()]
