@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.chroma_client import ChromaDBClient
 from pydantic import BaseModel
 from typing import List, Optional
+from app.services.embedding_postgresql import generate_related_queries
+from app.services.embedding_utils import search_videos_with_vectorDB
 import uuid
 
 router = APIRouter(prefix="/chroma", tags=["vector-search"])
@@ -46,15 +48,24 @@ async def embed_video_text(request: EmbeddingRequest):
 @router.post("/search")
 async def search_videos(request: SearchRequest):
     try:
-        collection = ChromaDBClient.get_instance().get_collection()
-        
-        # 同樣，這裡需要整合嵌入模型生成查詢向量
-        # 簡化示例：使用文本查詢
-        results = collection.query(
-            query_texts=[request.query],
-            n_results=request.limit
-        )
-        
-        return results
+        expanded_queries = generate_related_queries(request.query)
+        _, results = search_videos_with_vectorDB(request.query, k=5)
+
+        response = {
+            "query": request.query,
+            "expanded_queries": expanded_queries,
+            "results": [
+                {
+                    "score": score,
+                    "video_id": vid,
+                    "title": title,
+                    "summary": summary,
+                    "url": embed_url
+                }
+                for score, vid, title, summary, embed_url in results
+            ]
+        }
+
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"搜尋失敗: {str(e)}")

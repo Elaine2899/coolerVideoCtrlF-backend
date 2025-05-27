@@ -60,7 +60,13 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
     # CORS 設定（跨域資源共享）
-    CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "*").split(",")
+    # CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+    
+    CORS_ORIGINS: List[str] = [
+        "https://cooler-video-ctrl-f-frontend.vercel.app",         # 主要生產環境
+        "https://cooler-video-ctrl-f-frontend-git-main-elaines-projects-e26a7398.vercel.app",  # main 分支預覽
+        "http://localhost:5173"  # 本地開發環境
+    ]
     CORS_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE"]
     CORS_HEADERS: List[str] = ["*"]
 

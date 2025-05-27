@@ -1,0 +1,19 @@
+# 重要：不要把這些東西塞進 image
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+.env.*
+*.log
+.cache/
+models/
+data/
+*.pt
+*.bin
+*.onnx
+*.sqlite
+*.db
+.idea/
+.vscode/
