@@ -11,7 +11,7 @@ from app.db import get_db, init_db
 from app.api import video_router, chroma_router
 from app.chroma_client import ChromaDBClient
 
-from services.db_utils import login_postgresql
+from app.services.db_utils import login_postgresql
 
 # 設定日誌
 logger = logging.getLogger(__name__)

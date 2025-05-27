@@ -10,7 +10,7 @@ from bertopic import BERTopic
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-from db_utils import login_postgresql
+from app.services.db_utils import login_postgresql #別亂改import的路徑= =
 
 # ---------- 資料庫設定 ----------
 
