@@ -9,10 +9,18 @@ import re
 from bertopic import BERTopic
 from dotenv import load_dotenv
 import google.generativeai as genai
+import configparser
 
 # ---------- 工具函數 ----------
-load_dotenv()
-genai.configure(api_key="AIzaSyBNBn7je9hOrk5ny-TjabghvHCXr6ZXHbQ")
+# 讀取 config.ini
+config = configparser.ConfigParser()
+config.read('config.ini')  # 如果檔案不在同一資料夾，請加路徑
+
+# 取得 API Key
+api_key = config.get('gemini', 'api_key')
+
+# 設定 Gemini API
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # 真正的topic expand，能生成更多input

@@ -9,6 +9,7 @@ from app.services.db_utils import login_postgresql
 from app.chroma_client import ChromaDBClient
 from typing import Optional
 from fastapi import Query
+from fastapi import HTTPException
 
 router = APIRouter()
 
