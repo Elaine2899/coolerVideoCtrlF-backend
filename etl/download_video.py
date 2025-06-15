@@ -254,27 +254,22 @@ def clean_text(text):#清理字幕檔
     return text
 
 if __name__ == "__main__":
-    keyword = [ 
-    "What are the basic components of a computer system?",
-    "What is the difference between hardware and software?",
-    "How does the CPU execute instructions?",
-    "What is binary and how is data represented in computers?",
-    "What is an algorithm and how is it designed?",
-    "What is a programming language?",
-    "What is the difference between compiled and interpreted languages?",
-    "How does object-oriented programming work?",
-    "What is recursion in programming?",
-    "What are data structures and why are they important?",
-    "What is the difference between a stack and a queue?",
-    "How does a binary search tree work?",
-    "What is Big-O notation and how is algorithm efficiency measured?",
-    "What are the main functions of an operating system?",
-    "How does memory management work in operating systems?",
-    "What is computer networking and how do protocols work?",
-    "What is the Internet and how does it function at a technical level?",
-    "What is artificial intelligence and how is it applied in computer science?",
-    "How do neural networks learn from data?",
-    "What are ethical considerations in computer science and AI development?"]
+    keyword =  [
+    "How do you apply integration by parts?",
+    "What are eigenvalues and eigenvectors?",
+    "What is a matrix and how is it used in linear algebra?",
+    "How do you calculate the determinant of a matrix?",
+    "What is a vector space?",
+    "How do you solve systems of linear equations using Gaussian elimination?",
+    "What is a probability distribution?",
+    "What is the difference between permutations and combinations?",
+    "What is Bayes' theorem and how is it used?",
+    "What is a proof by contradiction?",
+    "What is a logical implication in mathematical logic?",
+    "What is a set and how is set notation used?",
+    "What is a function in terms of set theory?",
+    "How is graph theory applied in discrete mathematics?"
+]
 
     conn = login_postgresql()
 

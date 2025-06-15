@@ -11,12 +11,7 @@ from app.db import get_db, init_db
 from app.api import video_router, chroma_router
 from app.chroma_client import ChromaDBClient
 
-<<<<<<< HEAD
-#載入postgresql連線
-from app.db import login_postgresql
-=======
 from services.db_utils import login_postgresql
->>>>>>> main
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -112,16 +107,12 @@ logger.info("✅ FastAPI app instance created at root level")
 # 根路由
 @app.get("/")
 async def root():
-<<<<<<< HEAD
-=======
     
->>>>>>> main
     return {
         "message": "Video Search API 運行",
         "version": settings.API_VERSION
     }
 
-<<<<<<< HEAD
 #timlin_test
 @app.get("/show_videos")
 def show_videos():#顯示多部影片回傳embed_urls ，未來應該是v_ids陣列進來
@@ -148,7 +139,6 @@ def show_videos():#顯示多部影片回傳embed_urls ，未來應該是v_ids陣
     print(show_videos_url)
     '''
     
-=======
 # import bcrypt#帳號加密、檢驗密碼
 
 # def hash_password_bcrypt(password):
@@ -223,7 +213,6 @@ def user_login(user_name, email, password):
         cursor.close()
         conn.close()
         return {"status": "User login successfully"}
->>>>>>> main
 
 # if __name__ == "__main__":
 #     import uvicorn
