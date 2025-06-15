@@ -5,7 +5,7 @@ import google.generativeai as genai
 from app.services.vectordb_search_for_main import search_videos_with_vectorDB
 
 load_dotenv()
-genai.configure(api_key"GAIzaSyBNBn7je9hOrk5ny-TjabghvHCXr6ZXHbQ")
+genai.configure(api_key="GAIzaSyBNBn7je9hOrk5ny-TjabghvHCXr6ZXHbQ")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 
