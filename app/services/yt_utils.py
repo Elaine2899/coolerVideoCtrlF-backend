@@ -6,9 +6,8 @@ import shutil
 from datetime import datetime
 from configparser import ConfigParser
 from transformers import pipeline, AutoTokenizer
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
 
+'''
 config = ConfigParser()
 config.read("config.ini")
 llm = ChatGoogleGenerativeAI(
@@ -71,3 +70,4 @@ def download_and_save_to_postgresql(video_url, title, description, conn, languag
         if res:
             cur.execute("INSERT INTO video_categories (video_id, category_id) VALUES (%s, %s)", (vid, res[0]))
     conn.commit()
+'''

@@ -12,7 +12,7 @@ import google.generativeai as genai
 
 # ---------- 工具函數 ----------
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai.configure(api_key="AIzaSyBNBn7je9hOrk5ny-TjabghvHCXr6ZXHbQ")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # 真正的topic expand，能生成更多input

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db import get_db
-from app.services.yt_utils import search_youtube_with_subtitles, download_and_save_to_postgresql
+#from app.services.yt_utils import search_youtube_with_subtitles, download_and_save_to_postgresql
 from app.services.embedding_utils import search_videos_with_vectorDB
 from app.services.llm_expand import generate_related_queries
 from app.services.learning_map import generate_learning_map
