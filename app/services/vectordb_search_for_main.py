@@ -5,9 +5,10 @@ import torch
 from app.services.llm_expand import generate_related_queries  # 確保你引入 LLM 擴展函數
 import psycopg2
 import os
+from app.chroma_client import ChromaDBClient
 
 # === 初始化 ChromaDB client & collection ===
-client = PersistentClient(path="D:/Chroma", settings=Settings(allow_reset=True))
+client = ChromaDBClient.get_instance().get_client()
 collection_tt = client.get_or_create_collection(name="title_topic_emb")
 collection_st = client.get_or_create_collection(name="summary_transcription_emb")
 collection_chunks = client.get_or_create_collection(name="transcription_chunks_emb")
