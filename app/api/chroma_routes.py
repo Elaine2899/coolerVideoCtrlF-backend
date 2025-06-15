@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.chroma_client import ChromaDBClient
 from pydantic import BaseModel
 from typing import List, Optional
-from app.services.embedding_postgresql import generate_related_queries
+from app.services.llm_expand import generate_related_queries
 from app.services.embedding_utils import search_videos_with_vectorDB
 import uuid
 

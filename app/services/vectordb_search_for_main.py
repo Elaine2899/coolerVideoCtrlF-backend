@@ -2,7 +2,7 @@ from chromadb import PersistentClient
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 import torch
-from embedding_postgresql import generate_related_queries  # 確保你引入 LLM 擴展函數
+from app.services.llm_expand import generate_related_queries  # 確保你引入 LLM 擴展函數
 import psycopg2
 import os
 
@@ -56,8 +56,8 @@ def search_videos_with_vectorDB(query: str, k=5):
     video_scores = {}
 
     for query_text in expanded_queries:
-        q_tt_emb = model_tt.encode(query_text).tolist()
-        q_st_emb = model_st.encode(query_text).tolist()
+        q_tt_emb = model_tt.encode(query_text)
+        q_st_emb = model_st.encode(query_text)
 
         for emb, meta in zip(all_tt["embeddings"], all_tt["metadatas"]):
             vid = meta["video_id"]

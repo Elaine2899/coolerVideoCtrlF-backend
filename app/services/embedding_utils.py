@@ -4,7 +4,7 @@ from chromadb import HttpClient
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from sentence_transformers import SentenceTransformer
 from app.services.db_utils import login_postgresql
-from app.services.embedding_postgresql import generate_related_queries
+from app.services.llm_expand import generate_related_queries
 from app.chroma_client import ChromaDBClient
 
 # ==== 遠端 ChromaDB 設定 ====
