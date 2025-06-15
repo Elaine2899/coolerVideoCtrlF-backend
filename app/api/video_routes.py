@@ -11,6 +11,7 @@ from typing import Optional
 from fastapi import Query
 from fastapi import HTTPException
 
+from datetime import datetime
 router = APIRouter()
 
 '''
@@ -129,6 +130,128 @@ def get_video_chunk_counts():
     return {
         "total_videos": len(result),
         "videos": result
+    }
+
+
+# 使用者註冊(已經成功加入timlin)
+@router.post("/user_register")#之後改回post，前端傳入帳密
+def user_register(user_name,email,password):
+    # 前端傳入名稱、信箱、密碼
+    conn = login_postgresql()  # 呼叫函數
+    cursor = conn.cursor()
+    now = datetime.now()
+    # user_name = "TimLin" #先預設 之後改
+    # email = 'aa0909095679@gmail.com'
+    # password = '000'
+    try:
+        # 檢查 email 是否已存在
+        cursor.execute("SELECT id FROM users WHERE email = %s;", (email,))
+        result = cursor.fetchone()
+        if result is not None:
+            return {"status": "Email already registered"}
+
+        # 寫入新使用者
+        cursor.execute("""
+            INSERT INTO users (username, email, password_hash, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s);
+        """, (user_name, email, password, now, now))
+
+        conn.commit()
+        return {"status": "User registered successfully"}
+
+    except Exception as e:
+        return {"status": "Error", "message": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# 使用者登入(已經成功登入timlin)
+@router.post("/user_login")#之後改成post 前端傳入帳密
+def user_login(user_name,email ,password ):
+    #前端傳入名稱、信箱、密碼
+    conn = login_postgresql()
+    cursor = conn.cursor()
+    # user_name = 'TimLin'#先預設 之後改
+    # email = "aa0909095679@gmail.com"
+    # password = '000'
+    try:
+        # 查詢確認資訊是否符合
+        cursor.execute("""
+            SELECT id FROM users 
+            WHERE email = %s AND password_hash = %s AND username = %s;
+        """, (email, password, user_name))
+        
+        result = cursor.fetchone()
+        if result is None:
+            return {"status": "Login failed. Check credentials."}
+        return {"status": "User login successfully"}
+
+    except Exception as e:
+        return {"status": "Error", "message": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+        return {"status": "User login successfully"}
+
+
+#記錄點下影片的資訊，需要判斷是誰、哪一部影片、從哪看到哪
+@router.post("/click_video")
+def click_video(user_id=0,video_id=0, watched_from_sec=0, watched_to_sec=0):
+    conn = login_postgresql()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO user_video_history (user_id, video_id, watched_from_sec, watched_to_sec, date_time)
+        VALUES (%s, %s, %s, %s, NOW())
+    """, (user_id, video_id, watched_from_sec, watched_to_sec))
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Click recorded"}
+
+#簡易推薦片邏輯
+@router.get("/recommend")
+def recommend(user_id: int):
+    conn = login_postgresql()
+    cursor = conn.cursor()
+
+    # Step 1: 統計使用者最近觀看過哪些影片類別（TOP 3）
+    cursor.execute("""
+        SELECT vc.category_id, COUNT(*) AS watch_count
+        FROM user_video_history h
+        JOIN video_categories vc ON h.video_id = vc.video_id
+        WHERE h.user_id = %s
+        GROUP BY vc.category_id
+        ORDER BY watch_count DESC
+        LIMIT 3
+    """, (user_id,))
+    
+    favorite_categories = [row[0] for row in cursor.fetchall()]
+    if not favorite_categories:
+        return {"message": "沒有觀看紀錄", "videos": []}
+
+    # Step 2: 從這些類別中找「沒看過的影片」來推薦
+    cursor.execute("""
+        SELECT DISTINCT v.id, v.title,v.embed_url
+        FROM videos v
+        JOIN video_categories vc ON v.id = vc.video_id
+        WHERE vc.category_id = ANY(%s)
+        AND v.id NOT IN (
+            SELECT video_id FROM user_video_history WHERE user_id = %s
+        )
+        ORDER BY v.created_at DESC
+        LIMIT 5
+    """, (favorite_categories, user_id))
+
+    videos = cursor.fetchall()
+    conn.close()
+
+    return {
+        "recommended_categories": favorite_categories,
+        "videos": videos
     }
 
 #抓影片的連結，但先用不到

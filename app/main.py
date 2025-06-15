@@ -78,7 +78,7 @@ def health_check():
         "status": "healthy",
         "version": settings.API_VERSION,
         "port": port,
-        "timestamp": datetime.datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat()
     }
 
 
@@ -113,80 +113,6 @@ async def root():
         "version": settings.API_VERSION
     }
 
-# import bcrypt#帳號加密、檢驗密碼
-
-# def hash_password_bcrypt(password):
-#     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-# def check_password_bcrypt(plain_password, hashed_password):
-#     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
-
-
-# 使用者註冊
-app.post("/user_register")
-def user_register(user_name, email, password):
-    # 前端傳入名稱、信箱、密碼
-    conn = login_postgresql()  # 呼叫函數
-    cursor = conn.cursor()
-    now = datetime.now()
-    #password =hash_password_bcrypt(password)
-
-    try:
-        # 檢查 email 是否已存在
-        cursor.execute("SELECT id FROM users WHERE email = %s;", (email,))
-        result = cursor.fetchone()
-        if result is not None:
-            return {"status": "Email already registered"}
-
-        # 寫入新使用者
-        cursor.execute("""
-            INSERT INTO users (username, email, password_hash, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s);
-        """, (user_name, email, password, now, now))
-
-        conn.commit()
-        return {"status": "User registered successfully"}
-
-    except Exception as e:
-        return {"status": "Error", "message": str(e)}
-
-    finally:
-        cursor.close()
-        conn.close()
-
-# 使用者登入
-app.post("/user_login")
-def user_login(user_name, email, password):
-    #前端傳入名稱、信箱、密碼
-    conn = login_postgresql()
-    cursor = conn.cursor()
-    
-    try:
-        # cursor.execute("""
-        #     SELECT password_hash FROM users 
-        #     WHERE email = %s;
-        # """, (email))#對比密碼是否正確
-        # hash_pwd = cursor.fetchone()
-        # if check_password_bcrypt(password, hash_pwd):
-        #     return {"status": "Login successful"}
-
-        # 查詢確認資訊是否符合
-        cursor.execute("""
-            SELECT id FROM users 
-            WHERE email = %s AND password_hash = %s AND username = %s;
-        """, (email, password, user_name))
-        
-        result = cursor.fetchone()
-        if result is None:
-            return {"status": "Login failed. Check credentials."}
-        return {"status": "User login successfully"}
-
-    except Exception as e:
-        return {"status": "Error", "message": str(e)}
-
-    finally:
-        cursor.close()
-        conn.close()
-        return {"status": "User login successfully"}
 
 # if __name__ == "__main__":
 #     import uvicorn
