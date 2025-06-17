@@ -235,7 +235,7 @@ def recommend(user_id: int):
 
     # Step 2: 從這些類別中找「沒看過的影片」來推薦
     cursor.execute("""
-        SELECT DISTINCT v.id, v.title,v.embed_url
+        SELECT DISTINCT v.id, v.title,v.embed_url,v.created_at
         FROM videos v
         JOIN video_categories vc ON v.id = vc.video_id
         WHERE vc.category_id = ANY(%s)
@@ -243,7 +243,7 @@ def recommend(user_id: int):
             SELECT video_id FROM user_video_history WHERE user_id = %s
         )
         ORDER BY v.created_at DESC
-        LIMIT 5
+        LIMIT 10
     """, (favorite_categories, user_id))
 
     videos = cursor.fetchall()
