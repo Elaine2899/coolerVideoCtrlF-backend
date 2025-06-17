@@ -11,7 +11,6 @@ from app.db import get_db, init_db
 from app.api import video_router, chroma_router
 from app.chroma_client import ChromaDBClient
 
-from app.services.db_utils import login_postgresql
 
 # 設定日誌
 logger = logging.getLogger(__name__)
@@ -113,6 +112,36 @@ async def root():
         "version": settings.API_VERSION
     }
 
+
+# ✅ 新增 JWT 認證支援，用來處理videos_route的get_current_user(request: Request)，在docs可以輸入token測試
+from fastapi.openapi.models import APIKey, APIKeyIn, SecuritySchemeType
+from fastapi.openapi.utils import get_openapi
+
+from fastapi.security import HTTPBearer
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Video Search API",
+        version="1.0",
+        description="基於 FastAPI 的影片搜尋 API",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            method["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 # if __name__ == "__main__":
 #     import uvicorn

@@ -132,6 +132,25 @@ def get_video_chunk_counts():
         "videos": result
     }
 
+#後端新增一個解密 JWT 的函數（用於後續需要身份的 API）
+from fastapi import Request
+from jose import jwt#之後要加入requirement.txt
+from datetime import timedelta
+SECRET_KEY = "qwu8X34j1n!s9@Fkd9vsh27@#jsaL90skdF0=93M"  # 記得放在環境變數或 .env 中，以及railway的變數裡面
+ALGORITHM = "HS256"
+
+def get_current_user(request: Request):#用來解碼前端傳進來的token
+    token = request.headers.get("authorization")
+    print("token:", token)
+    print("SECRET_KEY:", SECRET_KEY)
+    if not token or not token.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+
+    try:
+        payload = jwt.decode(token[7:], SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["user_id"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token decode failed")
 
 # 使用者註冊(已經成功加入timlin)
 @router.post("/user_register")#之後改回post，前端傳入帳密
@@ -167,6 +186,7 @@ def user_register(user_name,email,password):
         conn.close()
 
 # 使用者登入(已經成功登入timlin)
+
 @router.post("/user_login")#之後改成post 前端傳入帳密
 def user_login(user_name,email ,password ):
     #前端傳入名稱、信箱、密碼
@@ -185,7 +205,18 @@ def user_login(user_name,email ,password ):
         result = cursor.fetchone()
         if result is None:
             return {"status": "Login failed. Check credentials."}
-        return {"status": "User login successfully"}
+        
+        user_id = result[0]
+        # 產生 token（有效期 7 天）
+        payload = {
+            "user_id": user_id,
+            "exp": datetime.utcnow() + timedelta(days=7)
+        }
+        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+        return {"status": "User login successfully",
+                 "access_token": token#回傳前端token
+            }
 
     except Exception as e:
         return {"status": "Error", "message": str(e)}
@@ -193,12 +224,11 @@ def user_login(user_name,email ,password ):
     finally:
         cursor.close()
         conn.close()
-        return {"status": "User login successfully"}
 
 
 #記錄點下影片的資訊，需要判斷是誰、哪一部影片、從哪看到哪
 @router.post("/click_video")
-def click_video(user_id=0,video_id=0, watched_from_sec=0, watched_to_sec=0):
+def click_video(user_id: int = Depends(get_current_user),video_id=1, watched_from_sec=0, watched_to_sec=0):
     conn = login_postgresql()
     cursor = conn.cursor()
 
@@ -214,7 +244,7 @@ def click_video(user_id=0,video_id=0, watched_from_sec=0, watched_to_sec=0):
 
 #簡易推薦片邏輯
 @router.get("/recommend")
-def recommend(user_id: int):
+def recommend(user_id: int = Depends(get_current_user)):
     conn = login_postgresql()
     cursor = conn.cursor()
 
