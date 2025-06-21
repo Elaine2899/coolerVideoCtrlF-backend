@@ -15,6 +15,11 @@ from dotenv import load_dotenv
 load_dotenv()
 import configparser
 
+
+from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
+import json, re, os
+from datetime import datetime
+
 def load_api_key(config_file="config.ini"):
     if not os.path.exists(config_file):
         raise FileNotFoundError(f"❌ 找不到 {config_file}，請放在專案根目錄！")
@@ -44,13 +49,19 @@ llm = ChatGoogleGenerativeAI(
 summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-6-6")
 tokenizer = AutoTokenizer.from_pretrained("sshleifer/distilbart-cnn-6-6")
 
-def time_str_to_str(tstr):
-    parts = [float(p) for p in tstr.split(":")]
+def time_str_to_str(time_str):
+    parts = time_str.split(":")
     if len(parts) == 3:
-        return f"{int(parts[0])}:{int(parts[1]):02}:{int(parts[2]):02}"
+        return f"{int(parts[1]):02}:{int(parts[2]):02}"
     elif len(parts) == 2:
-        return f"{int(parts[0])}:{int(parts[1]):02}"
+        return f"{int(parts[0]):02}:{int(parts[1]):02}"
     return "00:00"
+
+def seconds_to_time_str(seconds):
+    h = int(seconds // 3600)
+    m = int((seconds % 3600) // 60)
+    s = int(seconds % 60)
+    return f"{h:02}:{m:02}:{s:02}"
 
 def login_postgresql():
     print(" 請登入 PostgreSQL 資料庫")
@@ -136,115 +147,112 @@ def predict_topic_with_gemini(summary_text):
     result = llm.invoke(messages)
     return result.content
 
+
 def download_and_save_to_postgresql(video_url, title, description, conn, language="en"):
-    yt_dlp_path = r"C:\\Users\\Tim\\AppData\\Roaming\\Python\\Python311\\Scripts\\yt-dlp.exe"
     print(f"\U0001f3ac 處理影片：{video_url}")
-    command = [
-        yt_dlp_path,
-        "--write-auto-sub",
-        "--sub-lang", language,
-        "--skip-download",
-        "--output", "-",
-        video_url
-    ]
+    video_id = video_url.split("v=")[-1]
+
     try:
-        subprocess.run(command, check=True)
-        vtt_filename = next((f for f in os.listdir() if f.endswith(f"{language}.vtt")), None)
-        if not vtt_filename:
-            print(" 找不到字幕檔")
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            try:
+                # 優先使用手動字幕
+                transcript = transcript_list.find_manually_created_transcript([language]).fetch()
+            except NoTranscriptFound:
+                # 若沒有手動字幕，再找自動字幕
+                transcript = transcript_list.find_generated_transcript([language]).fetch()
+        except (TranscriptsDisabled, NoTranscriptFound):
+            print(f"❌ 此影片無 {language} 字幕：{video_url}")
             return
         structured_subtitles = []
         output_lines = []
-        current_start = ""
-        current_end = ""
-        current_text = ""
-        previous_line = ""
-        with open(vtt_filename, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                match = re.match(r"(\d\d:\d\d:\d\d\.\d+) --> (\d\d:\d\d:\d\d\.\d+)", line)
-                if match:
-                    if current_text:
-                        structured_subtitles.append({"start": current_start, "end": current_end, "content": current_text.strip()})
-                        current_text = ""
-                    current_start, current_end = match.groups()
-                elif line and not line.startswith("NOTE") and "align:start" not in line:
-                    line = re.sub(r"<.*?>", "", line)
-                    current_text += line + " "
-                    if line != previous_line:
-                        output_lines.append(line)
-                        previous_line = line
-        if current_start and current_text:
-            structured_subtitles.append({"start": current_start, "end": current_end, "content": current_text.strip()})
-        os.remove(vtt_filename)
-        subtitle_text = "\n".join(output_lines)#字幕檔生成
-        subtitle_text = clean_text(subtitle_text)#清理字幕
-        # 如果時間太短就不要了
-        if structured_subtitles:
-            last_end = structured_subtitles[-1]["end"]
-            duration_str = time_str_to_str(last_end)
 
-            time_parts = [int(float(x)) for x in duration_str.split(":")]
-            if len(time_parts) == 3:
-                duration_sec = time_parts[0] * 3600 + time_parts[1] * 60 + time_parts[2]
-            elif len(time_parts) == 2:
-                duration_sec = time_parts[0] * 60 + time_parts[1]
-            else:
-                duration_sec = 0
+        for i, entry in enumerate(transcript):
+            start = entry.start
+            duration = entry.duration
+            content = entry.text.strip()
 
+            # 格式化為 mm:ss
+            mmss = time_str_to_str(seconds_to_time_str(start))
+
+            # 移除 HTML 標籤與雜訊
+            content = re.sub(r"<.*?>", "", content)
+            content = re.sub(r"\[.*?\]", "", content)
+            content = re.sub(r"\s+", " ", content)
+
+            # 忽略空段落
+            if not content:
+                continue
+
+            # 過濾重複
+            if structured_subtitles and content in structured_subtitles[-1]["content"]:
+                continue
+
+            structured_subtitles.append({
+                "start": mmss,
+                "content": content
+            })
+            output_lines.append(content)
+
+        subtitle_text = "\n".join(output_lines)
+
+        # 儲存影片長度（取最後字幕結束時間）
+        if transcript:
+            last_end = transcript[-1].start + transcript[-1].duration
+            duration_str = time_str_to_str(seconds_to_time_str(last_end))
+            duration_sec = int(last_end)
             if duration_sec < 180:
-                print(f" 影片長度僅 {duration_str}，少於 3 分鐘，略過儲存：{video_url}")
+                print(f" 影片長度僅 {duration_str}，少於 3 分鐘，略過儲存")
+                return
+            if duration_sec > 3600:
+                print(f" 影片長度 {duration_str}，大於 1 小時，略過儲存")
                 return
         else:
             duration_str = ""
-        
-        #抽出內嵌碼
-        video_id = video_url.split("v=")[-1].split("&")[0]
+
+        # 清理字幕內容
+        subtitle_text = clean_text(subtitle_text)
+
+        # 抽出內嵌網址
         embed_url = f"https://www.youtube.com/embed/{video_id}"
-        
-        #做summary
+
+        # 做 summary + 主題分類
         summary = generate_summary_local(subtitle_text)
-        
-        #主題分類
         assigned_categories = predict_topic_with_gemini(summary)
-        assigned_categories = [topic.strip() for topic in assigned_categories.split(",")]
+        assigned_categories = [t.strip() for t in assigned_categories.split(",")]
+
         cursor = conn.cursor()
-        
-        #如果已儲存就跳過
         cursor.execute("SELECT id FROM videos WHERE url = %s", (video_url,))
         if cursor.fetchone():
             print(f" 影片已存在於資料庫中，略過：{video_url}")
             return
-        last_end = structured_subtitles[-1]["end"] if structured_subtitles else ""
-        duration_str = time_str_to_str(last_end) if last_end else ""
-        insert_video = """
-        INSERT INTO videos (url, title, description, summary, transcription, transcription_with_time, duration_str, embed_url, created_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id;
-        """
-        cursor.execute(insert_video, (
+
+        # 儲存到資料庫
+        cursor.execute("""
+            INSERT INTO videos (url, title, description, summary, transcription, transcription_with_time, duration_str, embed_url, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id;
+        """, (
             video_url, title, description, summary, subtitle_text,
             json.dumps(structured_subtitles, ensure_ascii=False),
             duration_str, embed_url, datetime.utcnow()
         ))
+
         new_video_id = cursor.fetchone()[0]
         for topic in assigned_categories:
-            # 查找該 topic 對應的 id
             cursor.execute("SELECT id FROM categories WHERE topic = %s", (topic,))
             result = cursor.fetchone()
             if result:
                 category_id = result[0]
-                cursor.execute(
-                    "INSERT INTO video_categories (video_id, category_id) VALUES (%s, %s)",
-                    (new_video_id, category_id)
-                )
+                cursor.execute("INSERT INTO video_categories (video_id, category_id) VALUES (%s, %s)", (new_video_id, category_id))
             else:
                 print(f"⚠️ 找不到分類：{topic}，略過此分類")
+
         conn.commit()
-        print(f" 成功存影片：{title}，主題：{', '.join(assigned_categories)}")
-        print(f" 可嵌入網址：{embed_url}")
-    except subprocess.CalledProcessError as e:
-        print("執行 yt-dlp 失敗：", e)
+        print(f"✅ 成功儲存影片：{title}，主題：{', '.join(assigned_categories)}")
+
+    except Exception as e:
+        print("❌ 發生錯誤：", e)
 
 def clean_text(text):#清理字幕檔
     text = re.sub(r'WEBVTT.*?\n', '', text, flags=re.DOTALL)
@@ -254,35 +262,17 @@ def clean_text(text):#清理字幕檔
     return text
 
 if __name__ == "__main__":
-    keyword = [ 
-    "What are the basic components of a computer system?",
-    "What is the difference between hardware and software?",
-    "How does the CPU execute instructions?",
-    "What is binary and how is data represented in computers?",
-    "What is an algorithm and how is it designed?",
-    "What is a programming language?",
-    "What is the difference between compiled and interpreted languages?",
-    "How does object-oriented programming work?",
-    "What is recursion in programming?",
-    "What are data structures and why are they important?",
-    "What is the difference between a stack and a queue?",
-    "How does a binary search tree work?",
-    "What is Big-O notation and how is algorithm efficiency measured?",
-    "What are the main functions of an operating system?",
-    "How does memory management work in operating systems?",
-    "What is computer networking and how do protocols work?",
-    "What is the Internet and how does it function at a technical level?",
-    "What is artificial intelligence and how is it applied in computer science?",
-    "How do neural networks learn from data?",
-    "What are ethical considerations in computer science and AI development?"]
+    keyword = [     
+    "how to improve C++"]
 
     conn = login_postgresql()
 
     for key in keyword:
-        videos = search_youtube_with_subtitles(key, max_results=5)
+        videos = search_youtube_with_subtitles(key, max_results=1)
         for i, video in enumerate(videos, 1):
             print(f"{i}. {video['title']}")
             print(f"連結: {video['url']}")
             print(f"頻道: {video['channel']}")
             print(f"時長: {video['duration']}")
             download_and_save_to_postgresql(video['url'], video['title'], video.get('description', ''), conn)
+    conn.close()
