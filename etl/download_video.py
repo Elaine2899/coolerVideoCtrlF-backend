@@ -6,7 +6,7 @@ import psycopg2
 from datetime import datetime
 from getpass import getpass
 from urllib.parse import quote_plus
-from transformers import pipeline, AutoTokenizer
+import google.generativeai as genai
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -14,7 +14,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 load_dotenv()
 import configparser
-
 
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 import json, re, os
@@ -37,17 +36,7 @@ def load_api_key(config_file="config.ini"):
 
 # ✅ 呼叫
 api_key = load_api_key()
-
-# 初始化 Gemini API
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash-latest",
-    google_api_key=api_key,
-   
-)
-
-# 初始化 Summarizer 與 Tokenizer
-summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-6-6")
-tokenizer = AutoTokenizer.from_pretrained("sshleifer/distilbart-cnn-6-6")
+genai.configure(api_key=api_key)
 
 def time_str_to_str(time_str):
     parts = time_str.split(":")
@@ -105,53 +94,41 @@ def search_youtube_with_subtitles(keyword, max_results=10):
     except subprocess.CalledProcessError as e:
         print(" 執行 yt-dlp 發生錯誤：", e)
         return []
-
-def split_text_by_tokens(text, max_tokens=800):
-    words = text.split()
-    chunks = []
-    current = []
-    for word in words:
-        current.append(word)
-        token_len = len(tokenizer(" ".join(current))["input_ids"])
-        if token_len > max_tokens:
-            chunks.append(" ".join(current[:-1]))
-            current = [word]
-    if current:
-        chunks.append(" ".join(current))
-    return chunks
-
-def generate_summary_local(subtitle_text):
-    if len(subtitle_text) < 200:
-        return subtitle_text.strip()
+    
+def generate_summary_with_gemini(text, prompt="請為以下影片字幕生成一段精簡的英文摘要(避免逐句翻譯)："):
     try:
-        chunks = split_text_by_tokens(subtitle_text)
-        partial_summaries = []
-        for i, chunk in enumerate(chunks):
-            print(f"\U0001f9e9 正在處理第 {i+1} 段摘要...")
-            input_length = len(tokenizer(chunk)["input_ids"])
-            if input_length < 20:  # 可依實際需求調整閾值
-                partial_summaries.append(chunk.strip())
-                continue
-            result = summarizer(chunk, max_length=100, min_length=30, do_sample=False)
-            partial_summaries.append(result[0]['summary_text'])
-        return "\n".join(partial_summaries)
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        response = model.generate_content(prompt + text)
+        return response.text.strip()
     except Exception as e:
-        print(" 摘要失敗，回傳前段文字：", e)
-        return subtitle_text[:400]
-
+        print("❌ Gemini 摘要失敗：", e)
+        return text[:500]  # 備援：回傳前段文字
+    
 def predict_topic_with_gemini(summary_text):
-    messages = [
-        SystemMessage(content=f"這是一段YouTube影片的摘要內容：{summary_text}。請根據以下主題分類中，選出最適合的2個主題（只回傳英文主題名稱，用逗號分隔）：Computer Science, Law, Mathematics, Physics, Chemistry, Biology, Earth Science, History, Geography, Sports, Astronomy,Daily Life。請勿自行創造其他分類。"),
-        HumanMessage(content="根據摘要來判斷最適合的分類是哪種")
-    ]
-    result = llm.invoke(messages)
-    return result.content
+    try:
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        prompt = (
+            f"這是一段YouTube影片的摘要內容：{summary_text}\n"
+            "請根據以下主題分類中，選出最適合的2個主題（只回傳英文主題名稱，用逗號分隔）：\n"
+            "Computer Science, Law, Mathematics, Physics, Chemistry, Biology, Earth Science, History, Geography, Sports, Astronomy, Daily Life。\n"
+            "請勿自行創造其他分類。"
+        )
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        print("❌ Gemini 主題分類失敗：", e)
+        return "Daily Life"  # fallback 預設值
 
 
 def download_and_save_to_postgresql(video_url, title, description, conn, language="en"):
     print(f"\U0001f3ac 處理影片：{video_url}")
     video_id = video_url.split("v=")[-1]
 
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM videos WHERE url = %s", (video_url,))
+    if cursor.fetchone():
+        print(f" 影片已存在於資料庫中，略過：{video_url}")
+        return
     try:
         try:
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
@@ -217,15 +194,9 @@ def download_and_save_to_postgresql(video_url, title, description, conn, languag
         embed_url = f"https://www.youtube.com/embed/{video_id}"
 
         # 做 summary + 主題分類
-        summary = generate_summary_local(subtitle_text)
+        summary = generate_summary_with_gemini(subtitle_text)
         assigned_categories = predict_topic_with_gemini(summary)
         assigned_categories = [t.strip() for t in assigned_categories.split(",")]
-
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM videos WHERE url = %s", (video_url,))
-        if cursor.fetchone():
-            print(f" 影片已存在於資料庫中，略過：{video_url}")
-            return
 
         # 儲存到資料庫
         cursor.execute("""
@@ -262,8 +233,7 @@ def clean_text(text):#清理字幕檔
     return text
 
 if __name__ == "__main__":
-    keyword = [     
-    "how to improve C++"]
+    keyword = [ "how to cook chicken "]
 
     conn = login_postgresql()
 
