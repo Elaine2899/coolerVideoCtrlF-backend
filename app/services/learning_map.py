@@ -1,8 +1,6 @@
-import os
 import re
-from dotenv import load_dotenv
 import google.generativeai as genai
-from app.services.vectordb_search_for_main import search_videos_with_vectorDB
+from app.services.vectordb_search_for_main import search_videos_with_vectorDB_for_map
 import configparser
 
 # 讀取 config.ini
@@ -23,7 +21,7 @@ def generate_learning_map(input_text):
 
 我想學的是：「{input_text}」
 
-請幫我分成三個階段（階段 1、2、3），每個階段包含 2～3 個主要學習項目，每個項目再列出 3～5 個小進度（學習細項）。最後，請幫我為每個「項目」提供能夠用來搜尋 YouTube 或 Google 的**一個英文關鍵字（keyword）**。
+請幫我分成三個階段（階段 1、2、3），每個階段包含 2～3 個主要學習項目，每個項目再列出 3～5 個小進度（學習細項）。最後，請幫我為每個「項目」提供能夠用來搜尋 YouTube 或 Google 上相關教學的**一個英文關鍵字（keyword）**。
 
 **請注意：教學內容請用繁體中文撰寫，但每個項目的 Keywords 請全部使用英文。**
 
@@ -31,55 +29,50 @@ def generate_learning_map(input_text):
 
 請依下列格式產出：
 
-階段 1：Java 程式設計基礎
+階段 1：
 
-1. Java 語法與基本概念
-    - 認識 Java 開發環境 (JDK, IDE 例如 IntelliJ IDEA 或 Eclipse) 的安裝與設定
-    - 變數、資料型別 (int, float, double, boolean, String, array)
-    - 運算子與運算式
-    - 條件判斷式 (if-else, switch)
-    - 迴圈 (for, while, do-while)
-    - keywords: java basic syntax
+1. 項目1
+    - 小進度1
+    - 小進度2
+    - 小進度3
+    - keywords: keyword1 
 
-2. 物件導向程式設計 (OOP) 基礎
-    - 類別 (class) 與物件 (object) 的概念
-    - 封裝 (encapsulation)、繼承 (inheritance)、多型 (polymorphism) 的基本原理
-    - 建構子 (constructor) 與方法 (method)
-    - 存取修飾詞 (public, private, protected)
-    - keywords: java oop
+2. 項目2
+    - 小進度1
+    - 小進度2
+    - 小進度3
+    - keywords: keyword2
 
 
-階段 2：進階 Java 程式設計與應用
+階段 2：
 
-1. Java 集合框架 (Collections Framework)
-    - List, Set, Map 等常用介面的使用
-    - ArrayList, LinkedList, HashSet, HashMap 等常用實作類別的特性與應用
-    - Iterator 與泛型 (Generics) 的應用
-    - Collections 工具類別的使用
-    - keywords: java collections framework
+1. 項目1
+    - 小進度1
+    - 小進度2
+    - 小進度3
+    - keywords: keyword3 
 
-2. 檔案 I/O 與例外處理
-    - 檔案讀寫操作 (讀取、寫入文字檔案、二進位檔案)
-    - 例外處理機制 (try-catch-finally)
-    - 處理不同類型的例外 (IOException, FileNotFoundException 等)
-    - 使用 BufferedReader, BufferedWriter 等提升效率
-    - keywords: java file io
+2. 項目2
+    - 小進度1
+    - 小進度2
+    - 小進度3
+    - keywords: keyword4
 
-階段 3：Java 專案實作與進階技術
 
-1. Java GUI 程式設計 (使用 Swing 或 JavaFX)
-    - 建立簡單的視窗應用程式
-    - 使用不同的元件 (按鈕、文字欄位、標籤等)
-    - 事件處理 (event handling)
-    - 布局管理 (layout management)
-    - keywords: java swing tutorial
+階段 3：
 
-2. 資料庫連線與操作 (JDBC)
-    - 使用 JDBC 連線到資料庫 (例如 MySQL, PostgreSQL)
-    - 執行 SQL 語句 (查詢、新增、修改、刪除資料)
-    - 處理 ResultSet 與 PreparedStatement
-    - 資料庫交易處理
-    - keywords: java jdbc tutorial
+1. 項目1
+    - 小進度1
+    - 小進度2
+    - 小進度3
+    - keywords: keyword5
+
+2. 項目2
+    - 小進度1
+    - 小進度2
+    - 小進度3
+    - keywords: keyword6
+
 """
 
     try:
@@ -129,7 +122,7 @@ def generate_learning_map(input_text):
                     if line_strip.startswith("-"):
                         steps.append(line_strip[2:].strip())
                 
-                expanded , video = search_videos_with_vectorDB(query=keywords[0], k=1)  # 搜尋相關影片
+                expanded , video = search_videos_with_vectorDB_for_map(query=keywords[0], k=1)  # 搜尋相關影片
                 
                 items.append({
                     "title": title,

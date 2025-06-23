@@ -1,10 +1,7 @@
-from chromadb import PersistentClient
-from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 import torch
 from app.services.llm_expand import generate_related_queries  # 確保你引入 LLM 擴展函數
 import psycopg2
-import os
 from app.chroma_client import ChromaDBClient
 
 # === 初始化 ChromaDB client & collection ===
@@ -55,15 +52,17 @@ def search_videos_with_vectorDB(query: str, k=5):
     all_st = collection_st.get(include=["embeddings", "metadatas"])
 
     video_scores = {}
+    weights = [0.3, 0.25, 0.15, 0.1, 0.1, 0.1]
 
-    for query_text in expanded_queries:
+    for i, query_text in enumerate(expanded_queries):
+        weight = weights[i]  # 對應的查詢權重
         q_tt_emb = model_tt.encode(query_text)
         q_st_emb = model_st.encode(query_text)
 
         for emb, meta in zip(all_tt["embeddings"], all_tt["metadatas"]):
             vid = meta["video_id"]
             field = meta["field"]
-            score = cosine_similarity(q_tt_emb, emb) + 1  # 保證為正
+            score = (cosine_similarity(q_tt_emb, emb) + 1) * weight  
             video_scores.setdefault(vid, {"title": 0, "topic": 0, "summary": 0})
             if field in video_scores[vid]:
                 video_scores[vid][field] += score
@@ -71,7 +70,7 @@ def search_videos_with_vectorDB(query: str, k=5):
         for emb, meta in zip(all_st["embeddings"], all_st["metadatas"]):
             vid = meta["video_id"]
             field = meta["field"]
-            score = cosine_similarity(q_st_emb, emb) + 1
+            score = (cosine_similarity(q_st_emb, emb)) + 1 * weight
             video_scores.setdefault(vid, {"title": 0, "topic": 0, "summary": 0})
             if field == "summary":
                 video_scores[vid]["summary"] += score
@@ -101,6 +100,58 @@ def search_videos_with_vectorDB(query: str, k=5):
                         break
 
                 # 將 "HH:MM:SS" 轉為秒數
+                seconds = 0
+                if start:
+                    h, m, s = map(float, start.split(":"))
+                    seconds = int(h * 3600 + m * 60 + s)
+
+                if embed_url:
+                    embed_url = embed_url.split("?")[0] + f"?start={seconds}"
+
+                results.append((total_score, vid, title, summary, embed_url))
+
+    return expanded_queries, results
+
+def search_videos_with_vectorDB_for_map(query: str, k=5):
+    # 可擴展為 list，但目前只處理 query 本身
+    expanded_queries = [query]
+
+    # 取得 title 向量資料
+    all_tt = collection_tt.get(include=["embeddings", "metadatas"])
+
+    video_scores = {}
+
+    for query_text in expanded_queries:
+        q_tt_emb = model_tt.encode(query_text)
+
+        for emb, meta in zip(all_tt["embeddings"], all_tt["metadatas"]):
+            if meta["field"] != "title":
+                continue
+            vid = meta["video_id"]
+            score = cosine_similarity(q_tt_emb, emb) + 1  # 保證為正
+            video_scores.setdefault(vid, 0)
+            video_scores[vid] += score
+
+    # 排序影片分數
+    final_scores = sorted([(score, vid) for vid, score in video_scores.items()], reverse=True)
+    top_videos = final_scores[:k]
+
+    # 取得影片資訊與片段推薦
+    results = []
+    with psycopg2.connect("postgresql://postgres:pMHQKXAVRWXxhylnCiKOmslOKgVbjdvM@switchyard.proxy.rlwy.net:43353/railway") as conn:
+        with conn.cursor() as cursor:
+            for total_score, vid in top_videos:
+                cursor.execute("SELECT title, summary, embed_url FROM videos WHERE id = %s", (vid,))
+                row = cursor.fetchone()
+                title, summary, embed_url = row if row else ("", "", "")
+
+                start = None
+                for query_text in expanded_queries:
+                    start = get_best_chunk_start(vid, query_text)
+                    if start:
+                        break
+
+                # 時間轉換為秒數
                 seconds = 0
                 if start:
                     h, m, s = map(float, start.split(":"))

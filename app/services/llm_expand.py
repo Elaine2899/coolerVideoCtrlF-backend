@@ -1,13 +1,3 @@
-import os
-import json
-import torch
-import psycopg2
-import numpy as np
-from tqdm import tqdm
-from sentence_transformers import SentenceTransformer, util
-import re
-from bertopic import BERTopic
-from dotenv import load_dotenv
 import google.generativeai as genai
 import configparser
 
@@ -35,7 +25,7 @@ def generate_related_queries(input_text):
     prompt = (
         f"請列出5個與「{input_text}」密切相關的學術主題詞或關鍵詞(並依照相關程度排序)。"
         "請直接用英文詞語，輸出格式為一個Python list，不用包含``` python 或任何額外標記，只需輸出 Python list 即可，例如："
-        "['artificial intelligence', 'deep learning', 'data mining', 'neural networks', 'computer science']"
+        "['keyword1', 'keyword2', 'keyword3', 'keyword4', 'keyword5']"
     )
 
     # 3️⃣ 調用 LLM

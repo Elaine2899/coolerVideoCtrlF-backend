@@ -3,7 +3,7 @@ from app.chroma_client import ChromaDBClient
 from pydantic import BaseModel
 from typing import List, Optional
 from app.services.llm_expand import generate_related_queries
-from app.services.embedding_utils import search_videos_with_vectorDB
+from app.services.vectordb_search_for_main import search_videos_with_vectorDB
 import uuid
 
 router = APIRouter(prefix="/chroma", tags=["vector-search"])

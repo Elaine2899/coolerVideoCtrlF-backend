@@ -1,9 +1,6 @@
 import os
-import json
 import psycopg2
 from datetime import timedelta
-from chromadb import PersistentClient
-from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from app.chroma_client import ChromaDBClient
 
