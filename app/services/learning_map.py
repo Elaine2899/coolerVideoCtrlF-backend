@@ -93,7 +93,8 @@ def generate_learning_map(input_text):
             if not lines:
                 continue
 
-            phase_title = lines[0].strip()
+            raw_phase_title = lines[0].strip()
+            phase_title = re.sub(r"^階段\s*\d+\s*[：:]", "", raw_phase_title).strip()
             items = []
 
             # 擷取每個項目區塊（以數字加點開頭）
@@ -105,7 +106,8 @@ def generate_learning_map(input_text):
 
                 # 項目標題（例如：1. Python 基礎程式設計）
                 title_line = item_lines[0]
-                title = re.sub(r"^\d+\.\s*", "", title_line).strip()
+                raw_title = re.sub(r"^\d+\.\s*", "", title_line).strip()
+                title = re.sub(r"^項目\s*\d+\s*", "", raw_title).strip()
 
                 steps = []
                 keywords = []
@@ -120,7 +122,8 @@ def generate_learning_map(input_text):
 
                     # 若是合法步驟行
                     if line_strip.startswith("-"):
-                        steps.append(line_strip[2:].strip())
+                        cleaned_step = re.sub(r"^(小進度|步驟|Step)?\s*\d+\s*[:：\-、.]\s*", "", line_strip[2:].strip())
+                        steps.append(cleaned_step)
                 
                 expanded , video = search_videos_with_vectorDB_for_map(query=keywords[0], k=1)  # 搜尋相關影片
                 
@@ -141,29 +144,3 @@ def generate_learning_map(input_text):
     except Exception as e:
         print(f"❌ Gemini LLM擴展失敗：{e}")
         return None
-
-'''
-# 測試
-result = generate_learning_map("Machine Learning")
-
-if result:
-    for phase_key, phase_data in result.items():
-        print(f"\n====={phase_data['title']} =====\n")
-        for item in phase_data["items"]:
-            print(f"\n📘 {item['title']}")
-            print("🔑 Keyword:", item['keywords'][0] if item['keywords'] else "N/A")
-            print("➡️ Steps:")
-            for step in item["steps"]:
-                print(f"  - {step}")
-
-            # 🔽 印出影片資訊（若有）
-            if item["video"]:
-                score, vid, title, summary, embed_url = item["video"]
-                print("🎥 Video Recommendation:")
-                print(f"  - Title: {title}")
-                print(f"  - URL: {embed_url}")
-                print(f"  - Summary: {summary}")
-                print(f"  - Score: {score:.4f}")
-            else:
-                print("🎥 Video Recommendation: 無")
-'''
