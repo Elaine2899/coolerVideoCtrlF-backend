@@ -12,6 +12,13 @@ from fastapi import Query
 from fastapi import HTTPException
 
 from datetime import datetime
+
+#後端新增一個解密 JWT 的函數（用於後續需要身份的 API）
+from fastapi import Request
+from jose import jwt#要加入requirement.txt
+from datetime import timedelta
+from pydantic import BaseModel
+
 router = APIRouter()
 
 '''
@@ -132,10 +139,6 @@ def get_video_chunk_counts():
         "videos": result
     }
 
-#後端新增一個解密 JWT 的函數（用於後續需要身份的 API）
-from fastapi import Request
-from jose import jwt#之後要加入requirement.txt
-from datetime import timedelta
 SECRET_KEY = "qwu8X34j1n!s9@Fkd9vsh27@#jsaL90skdF0=93M"  # 記得放在環境變數或 .env 中，以及railway的變數裡面
 ALGORITHM = "HS256"
 
@@ -186,9 +189,16 @@ def user_register(user_name,email,password):
         conn.close()
 
 # 使用者登入(已經成功登入timlin)
+class LoginRequest(BaseModel):
+    user_name: str
+    email: str
+    password: str
 
-@router.post("/user_login")#之後改成post 前端傳入帳密
-def user_login(user_name,email ,password ):
+@router.post("/user_login")
+def user_login(data: LoginRequest):
+    user_name = data.user_name
+    email = data.email
+    password = data.password
     #前端傳入名稱、信箱、密碼
     conn = login_postgresql()
     cursor = conn.cursor()
