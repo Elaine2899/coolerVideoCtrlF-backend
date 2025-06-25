@@ -78,9 +78,7 @@ async def search_videos(query: Optional[str] = Query(None)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"搜尋失敗: {str(e)}")
 
-def save_learning_map_to_db(user_id: int, query: str, learning_map: dict):
-    conn = login_postgresql()
-    cur = conn.cursor()
+def save_learning_map_to_db(new_map_id,conn,cur,user_id: int, query: str, learning_map: dict):
     for phase_idx, (phase_key, phase) in enumerate(sorted(learning_map.items()), start=1):
         phase_title = phase.get("title", "")
         items = phase.get("items", [])
@@ -91,22 +89,20 @@ def save_learning_map_to_db(user_id: int, query: str, learning_map: dict):
             keywords = item.get("keywords", [])
             video = item.get("video", [])
 
-            video_url = video[5] if len(video) > 5 else None
+            video_url = video[4] if len(video) > 4 else None
             video_title = video[2] if len(video) > 2 else None
             video_summary = video[3] if len(video) > 3 else None
 
             cur.execute("""
                 INSERT INTO learning_map (
-                    user_id, phase_number, phase_title, item_title,
+                    user_id, map_id, phase_number, phase_title, item_title,
                     step_list, keyword_list, video_url, video_title, video_summary, created_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
             """, (
-                user_id, phase_idx, phase_title, item_title,
+                user_id, new_map_id, phase_idx, phase_title, item_title,
                 steps, keywords, video_url, video_title, video_summary, datetime.utcnow()
             ))
     conn.commit()
-    cur.close()
-    conn.close()
 
 @router.get("/learning_map")
 async def get_learning_map(query: Optional[str] = Query(None),user_id: int = Depends(get_current_user)):
@@ -122,10 +118,16 @@ async def get_learning_map(query: Optional[str] = Query(None),user_id: int = Dep
 
         if not learning_map:
             raise HTTPException(status_code=404, detail="無法生成學習地圖")
-        
+        conn = login_postgresql()
+        cur = conn.cursor()
+        # 在儲存一張地圖前，先取得新 map_id
+        cur.execute("SELECT COALESCE(MAX(map_id), 0) FROM learning_map WHERE user_id = %s", (user_id,))
+        current_max_map_id = cur.fetchone()[0]
+        new_map_id = current_max_map_id + 1
         # 儲存到資料庫
-        save_learning_map_to_db(user_id=user_id, query=query, learning_map=learning_map)
-
+        save_learning_map_to_db(new_map_id,conn,cur,user_id=user_id, query=query, learning_map=learning_map)
+        cur.close()
+        conn.close()
         return {
             "message":"成功儲存並製作學習地圖",
             "query": query,
@@ -140,7 +142,7 @@ async def get_learning_map(query: Optional[str] = Query(None),user_id: int = Dep
 async def show_learning_map(user_id: int = Depends(get_current_user)):
     conn = login_postgresql()
     cursor = conn.cursor()
-    cursor.execute("SELECT phase_nubber,phase_title,item_title,step_list,keyword_list,video_url,video_title,video_summary FROM learning_map WHERE user_id = %s",(user_id,))
+    cursor.execute("SELECT * FROM learning_map WHERE user_id = %s",(user_id,))
     learning_map = cursor.fetchall()
     conn.close()
     return{

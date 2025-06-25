@@ -243,7 +243,7 @@ def clean_text(text):#清理字幕檔
     return text
 
 if __name__ == "__main__":
-    keyword = [ "how to improve C++ "]
+    keyword = [ "how to improve SQL "]
 
     conn = login_postgresql()
 
