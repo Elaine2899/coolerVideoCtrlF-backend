@@ -9,6 +9,7 @@ except Exception as e:
 
 cursor = conn.cursor()
 # 建立 videos 資料表
+'''
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS videos (
     id SERIAL PRIMARY KEY,
@@ -57,7 +58,20 @@ INSERT INTO categories (topic) VALUES
 ('Literature'),
 ('Astronnomy'),
 ('Daily Life');
-""")
+""")'''
+cursor.execute("""CREATE TABLE learning_map (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,                     -- 對應使用者
+        phase_number INT,                         -- 第幾階段 (1/2/3)
+        phase_title TEXT,                         -- 階段名稱
+        item_title TEXT,                          -- 學習項目名稱
+        step_list TEXT[],                         -- 學習步驟（array）
+        keyword_list TEXT[],                      -- 關鍵字（array）
+        video_url TEXT,                           -- YouTube 影片網址
+        video_title TEXT,                         -- 影片標題
+        video_summary TEXT,                       -- 摘要（可選）
+        created_at TIMESTAMP DEFAULT NOW()   );"""
+               )
 conn.commit()
 print("✅ 成功建立三個資料表！並插入categories")
 cursor.close()

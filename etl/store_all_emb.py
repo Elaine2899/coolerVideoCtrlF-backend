@@ -75,7 +75,7 @@ cursor.execute("""
     FROM video_categories vc 
     JOIN videos v ON v.id = vc.video_id 
     JOIN categories c ON vc.category_id = c.id
-    WHERE v.transcription_with_time IS NOT NULL AND v.id < 100
+    WHERE v.transcription_with_time IS NOT NULL AND v.id>100
     GROUP BY v.id, v.url, v.title, v.summary, v.transcription, v.transcription_with_time
     ORDER BY v.id
 """)

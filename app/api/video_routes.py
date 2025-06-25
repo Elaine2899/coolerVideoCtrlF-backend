@@ -21,6 +21,22 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+SECRET_KEY = "qwu8X34j1n!s9@Fkd9vsh27@#jsaL90skdF0=93M"  # 記得放在環境變數或 .env 中，以及railway的變數裡面
+ALGORITHM = "HS256"
+
+def get_current_user(request: Request):#用來解碼前端傳進來的token
+    token = request.headers.get("authorization")
+    print("token:", token)
+    print("SECRET_KEY:", SECRET_KEY)
+    if not token or not token.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+
+    try:
+        payload = jwt.decode(token[7:], SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["user_id"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token decode failed")
+
 '''
 @router.get("/videos")
 def read_videos(db: Session = Depends(get_db)):
@@ -36,6 +52,7 @@ async def search_videos(query: Optional[str] = Query(None)):
             # 有查詢字 → 搜尋影片
             expanded_queries = generate_related_queries(query)
             _, results = search_videos_with_vectorDB(query, k=5)
+
         else:
             # 沒查詢字 → 推薦影片（你要實作這個 function）
             expanded_queries = []
@@ -61,8 +78,38 @@ async def search_videos(query: Optional[str] = Query(None)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"搜尋失敗: {str(e)}")
 
+def save_learning_map_to_db(user_id: int, query: str, learning_map: dict):
+    conn = login_postgresql()
+    cur = conn.cursor()
+    for phase_idx, (phase_key, phase) in enumerate(sorted(learning_map.items()), start=1):
+        phase_title = phase.get("title", "")
+        items = phase.get("items", [])
+
+        for item in items:
+            item_title = item.get("title", "")
+            steps = item.get("steps", [])
+            keywords = item.get("keywords", [])
+            video = item.get("video", [])
+
+            video_url = video[5] if len(video) > 5 else None
+            video_title = video[2] if len(video) > 2 else None
+            video_summary = video[3] if len(video) > 3 else None
+
+            cur.execute("""
+                INSERT INTO learning_map (
+                    user_id, phase_number, phase_title, item_title,
+                    step_list, keyword_list, video_url, video_title, video_summary, created_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            """, (
+                user_id, phase_idx, phase_title, item_title,
+                steps, keywords, video_url, video_title, video_summary, datetime.utcnow()
+            ))
+    conn.commit()
+    cur.close()
+    conn.close()
+
 @router.get("/learning_map")
-async def get_learning_map(query: Optional[str] = Query(None)):
+async def get_learning_map(query: Optional[str] = Query(None),user_id: int = Depends(get_current_user)):
     try:
         if not query:
             # 如果沒有提供 query，就回傳空的學習地圖結構
@@ -75,14 +122,31 @@ async def get_learning_map(query: Optional[str] = Query(None)):
 
         if not learning_map:
             raise HTTPException(status_code=404, detail="無法生成學習地圖")
+        
+        # 儲存到資料庫
+        save_learning_map_to_db(user_id=user_id, query=query, learning_map=learning_map)
 
         return {
+            "message":"成功儲存並製作學習地圖",
             "query": query,
             "learning_map": learning_map
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"生成學習地圖失敗: {str(e)}")
+
+#拿取學習地圖
+@router.get("/show_learning_map")
+async def show_learning_map(user_id: int = Depends(get_current_user)):
+    conn = login_postgresql()
+    cursor = conn.cursor()
+    cursor.execute("SELECT phase_nubber,phase_title,item_title,step_list,keyword_list,video_url,video_title,video_summary FROM learning_map WHERE user_id = %s",(user_id,))
+    learning_map = cursor.fetchall()
+    conn.close()
+    return{
+        "learning_map": learning_map
+    }
+
 
 @router.get("/videos")
 def get_all_videos():
@@ -139,22 +203,6 @@ def get_video_chunk_counts():
         "videos": result
     }
 
-SECRET_KEY = "qwu8X34j1n!s9@Fkd9vsh27@#jsaL90skdF0=93M"  # 記得放在環境變數或 .env 中，以及railway的變數裡面
-ALGORITHM = "HS256"
-
-def get_current_user(request: Request):#用來解碼前端傳進來的token
-    token = request.headers.get("authorization")
-    print("token:", token)
-    print("SECRET_KEY:", SECRET_KEY)
-    if not token or not token.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid token")
-
-    try:
-        payload = jwt.decode(token[7:], SECRET_KEY, algorithms=[ALGORITHM])
-        return payload["user_id"]
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token decode failed")
-
 # 使用者註冊(已經成功加入timlin)
 @router.post("/user_register")#之後改回post，前端傳入帳密
 def user_register(user_name,email,password):
@@ -195,10 +243,11 @@ class LoginRequest(BaseModel):
     password: str
 
 @router.post("/user_login")
-def user_login(data: LoginRequest):
+def user_login(user_name,email,password):#data: LoginRequest
+    '''
     user_name = data.user_name
     email = data.email
-    password = data.password
+    password = data.password'''
     #前端傳入名稱、信箱、密碼
     conn = login_postgresql()
     cursor = conn.cursor()

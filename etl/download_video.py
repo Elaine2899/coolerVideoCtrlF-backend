@@ -41,10 +41,16 @@ genai.configure(api_key=api_key)
 def time_str_to_str(time_str):
     parts = time_str.split(":")
     if len(parts) == 3:
-        return f"{int(parts[1]):02}:{int(parts[2]):02}"
+        h = int(parts[0])
+        m = int(parts[1])
+        s = int(float(parts[2]))
+        return f"{h}:{m:02}:{s:02}"
     elif len(parts) == 2:
-        return f"{int(parts[0]):02}:{int(parts[1]):02}"
-    return "00:00"
+        m = int(parts[0])
+        s = int(float(parts[1]))
+        return f"0:{m:02}:{s:02}"
+    else:
+        return "0:00:00"
 
 def seconds_to_time_str(seconds):
     h = int(seconds // 3600)
@@ -165,8 +171,12 @@ def download_and_save_to_postgresql(video_url, title, description, conn, languag
             if structured_subtitles and content in structured_subtitles[-1]["content"]:
                 continue
 
+            start_sec = start
+            end_sec = start + duration
+
             structured_subtitles.append({
-                "start": mmss,
+                "start": time_str_to_str(seconds_to_time_str(start_sec)),
+                "end": time_str_to_str(seconds_to_time_str(end_sec)),
                 "content": content
             })
             output_lines.append(content)
@@ -233,12 +243,12 @@ def clean_text(text):#清理字幕檔
     return text
 
 if __name__ == "__main__":
-    keyword = [ "how to cook chicken "]
+    keyword = [ "how to improve C++ "]
 
     conn = login_postgresql()
 
     for key in keyword:
-        videos = search_youtube_with_subtitles(key, max_results=1)
+        videos = search_youtube_with_subtitles(key, max_results=10)
         for i, video in enumerate(videos, 1):
             print(f"{i}. {video['title']}")
             print(f"連結: {video['url']}")
