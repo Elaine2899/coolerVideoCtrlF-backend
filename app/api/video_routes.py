@@ -52,7 +52,6 @@ async def search_videos(query: Optional[str] = Query(None)):
             # 有查詢字 → 搜尋影片
             expanded_queries = generate_related_queries(query)
             _, results = search_videos_with_vectorDB(query, k=5)
-
         else:
             # 沒查詢字 → 推薦影片（你要實作這個 function）
             expanded_queries = []
@@ -206,8 +205,18 @@ def get_video_chunk_counts():
     }
 
 # 使用者註冊(已經成功加入timlin)
+from pydantic import BaseModel
+
+class RegisterRequest(BaseModel):
+    user_name: str
+    email: str
+    password: str
+
 @router.post("/user_register")#之後改回post，前端傳入帳密
-def user_register(user_name,email,password):
+def user_register(data: RegisterRequest):
+    user_name = data.user_name
+    email = data.email
+    password = data.password
     # 前端傳入名稱、信箱、密碼
     conn = login_postgresql()  # 呼叫函數
     cursor = conn.cursor()
@@ -215,6 +224,9 @@ def user_register(user_name,email,password):
     # user_name = "TimLin" #先預設 之後改
     # email = 'aa0909095679@gmail.com'
     # password = '000'
+    # user_name = "qq" #先預設 之後改
+    # email = 'qq@gmail.com'
+    # password = 'qq'
     try:
         # 檢查 email 是否已存在
         cursor.execute("SELECT id FROM users WHERE email = %s;", (email,))
@@ -245,20 +257,16 @@ class LoginRequest(BaseModel):
     password: str
 
 @router.post("/user_login")
-def user_login(user_name,email,password):#data: LoginRequest
-    '''
+def user_login(data: LoginRequest):
     user_name = data.user_name
     email = data.email
-    password = data.password'''
+    password = data.password
     #前端傳入名稱、信箱、密碼
     conn = login_postgresql()
     cursor = conn.cursor()
     # user_name = 'TimLin'#先預設 之後改
     # email = "aa0909095679@gmail.com"
     # password = '000'
-    # user_name = 'qq'#先預設 之後改
-    # email = "qq@gmail.com"
-    # password = 'qq'
     try:
         # 查詢確認資訊是否符合
         cursor.execute("""
@@ -279,7 +287,8 @@ def user_login(user_name,email,password):#data: LoginRequest
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
         return {"status": "User login successfully",
-                 "access_token": token#回傳前端token
+                #  "access_token": token#回傳前端token
+                 "access_token": f"Bearer {token}"
             }
 
     except Exception as e:
@@ -288,7 +297,6 @@ def user_login(user_name,email,password):#data: LoginRequest
     finally:
         cursor.close()
         conn.close()
-
 
 #記錄點下影片的資訊，需要判斷是誰、哪一部影片、從哪看到哪
 @router.post("/click_video")
