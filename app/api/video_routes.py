@@ -256,6 +256,9 @@ def user_login(user_name,email,password):#data: LoginRequest
     # user_name = 'TimLin'#先預設 之後改
     # email = "aa0909095679@gmail.com"
     # password = '000'
+    # user_name = 'qq'#先預設 之後改
+    # email = "qq@gmail.com"
+    # password = 'qq'
     try:
         # 查詢確認資訊是否符合
         cursor.execute("""
