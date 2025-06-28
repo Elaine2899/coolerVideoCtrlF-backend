@@ -1,23 +1,15 @@
 import subprocess
-import os
-import re
-import json
+import json, re, os
 import psycopg2
 from datetime import datetime
-from getpass import getpass
-from urllib.parse import quote_plus
 import google.generativeai as genai
-
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
 
 from dotenv import load_dotenv
 load_dotenv()
 import configparser
 
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
-import json, re, os
-from datetime import datetime
+
 
 def load_api_key(config_file="config.ini"):
     if not os.path.exists(config_file):
